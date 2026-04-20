@@ -686,10 +686,10 @@ const Dashboard = ({ products, onOpenProduct }) => {
 
       {/* KPI grid */}
       <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16 }}>
-        <KpiCard label="Chiffre d'affaires" value={totals.rev} valueFmt={(v) => fmtEUR(v, 0)} trend={17.3} icon={Wallet} tone="violet" />
-        <KpiCard label="Bénéfice net" value={totals.profit} valueFmt={(v) => fmtEUR(v, 0)} trend={21.8} icon={TrendingUp} tone="emerald" />
-        <KpiCard label="Unités vendues" value={totals.units} trend={12.4} icon={ShoppingCart} tone="cyan" />
-        <KpiCard label="Marge moyenne" value={totals.avgMargin} valueFmt={(v) => v.toFixed(1) + '%'} trend={3.2} icon={Percent} tone="amber" />
+        <KpiCard label="Chiffre d'affaires" value={totals.rev} valueFmt={(v) => fmtEUR(v, 0)} icon={Wallet} tone="violet" />
+        <KpiCard label="Bénéfice net" value={totals.profit} valueFmt={(v) => fmtEUR(v, 0)} icon={TrendingUp} tone="emerald" />
+        <KpiCard label="Unités vendues" value={totals.units} icon={ShoppingCart} tone="cyan" />
+        <KpiCard label="Marge moyenne" value={totals.avgMargin} valueFmt={(v) => v.toFixed(1) + '%'} icon={Percent} tone="amber" />
       </div>
 
       {/* Main grid */}
@@ -1091,7 +1091,7 @@ const Accounting = ({ products }) => {
             <div key={m.month} className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr' }}>
               <div style={{ fontWeight: 600 }}>{m.month} {new Date().getFullYear()}</div>
               <div className="num">{fmtEUR(m.revenue, 0)}</div>
-              <div className="num" style={{ color: 'var(--rose)' }}>−{fmtEUR(m.expenses, 0)}</div>
+              <div className="num" style={{ color: m.expenses > 0 ? 'var(--rose)' : 'var(--text-2)' }}>{m.expenses > 0 ? '−' : ''}{fmtEUR(m.expenses, 0)}</div>
               <div className="num" style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtEUR(m.profit, 0)}</div>
               <div className="num" style={{ textAlign: 'right', fontWeight: 600 }}>{fmtEUR(m.profit * 0.25, 0)}</div>
             </div>

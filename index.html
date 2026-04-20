@@ -23,6 +23,9 @@
   <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.js" crossorigin></script>
   <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone@7.22.5/babel.min.js" crossorigin></script>
+  <!-- Firebase App + Firestore (compat CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div id="root"></div>
@@ -32,6 +35,18 @@
 const {
   useState, useEffect, useMemo, useRef, useCallback
 } = React;
+
+// ── Firebase init ─────────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD5ePQy0pZwMB-C1Nr5f44aTAYzesJAXo0",
+  authDomain: "drophub-372cc.firebaseapp.com",
+  projectId: "drophub-372cc",
+  storageBucket: "drophub-372cc.firebasestorage.app",
+  messagingSenderId: "253313084412",
+  appId: "1:253313084412:web:e85daed0ecc21966d3a079"
+};
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
 
 const {
   LayoutDashboard, Package, Calculator, BarChart3, Tags,
@@ -1242,50 +1257,141 @@ const Categories = ({ products }) => {
   );
 };
 
-const Settings = () => (
-  <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-    <div>
-      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Paramètres</h1>
-      <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>Configure ton espace de travail.</p>
-    </div>
+const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, syncStatus }) => {
+  const [showChangePwd, setShowChangePwd] = React.useState(false);
+  const [newPwd, setNewPwd] = React.useState('');
+  const [confirmPwd, setConfirmPwd] = React.useState('');
+  const [pwdError, setPwdError] = React.useState('');
 
-    <div className="surface" style={{ padding: 24 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Profil business</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="set-grid">
-        <div><label className="lbl">Nom boutique</label><input className="field" defaultValue="Ryan's Gaming Hub" /></div>
-        <div><label className="lbl">Devise</label><input className="field" defaultValue="EUR (€)" /></div>
-        <div><label className="lbl">TVA par défaut</label><input className="field" defaultValue="21%" /></div>
-        <div><label className="lbl">Pays</label><input className="field" defaultValue="Belgique" /></div>
+  const handleChangePwd = () => {
+    if (!newPwd) { setPwdError('Entrez un mot de passe'); return; }
+    if (newPwd.length < 4) { setPwdError('Minimum 4 caractères requis'); return; }
+    if (newPwd !== confirmPwd) { setPwdError('Les mots de passe ne correspondent pas'); return; }
+    onPasswordChange(newPwd);
+    setShowChangePwd(false);
+    setNewPwd(''); setConfirmPwd(''); setPwdError('');
+  };
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Paramètres</h1>
+        <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>Configure ton espace de travail.</p>
       </div>
-    </div>
 
-    <div className="surface" style={{ padding: 24 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Intégrations</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {[
-          { name: 'Shopify', status: 'connected', icon: '🛒' },
-          { name: 'AliExpress', status: 'connected', icon: '📦' },
-          { name: 'TikTok Ads', status: 'disconnected', icon: '🎥' },
-          { name: 'Meta Ads', status: 'connected', icon: '📱' },
-        ].map(i => (
-          <div key={i.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ fontSize: 22 }}>{i.icon}</div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{i.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{i.status === 'connected' ? 'Synchronisé' : 'Non connecté'}</div>
-              </div>
-            </div>
-            {i.status === 'connected'
-              ? <span className="badge badge-active"><Check size={10} strokeWidth={2.5} /> Connecté</span>
-              : <button className="btn-ghost">Connecter</button>}
+      {/* Sync status */}
+      <div className="surface" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: syncStatus === 'synced' ? 'var(--emerald)' : syncStatus === 'error' ? 'var(--rose)' : 'var(--amber)',
+          boxShadow: `0 0 8px ${syncStatus === 'synced' ? 'var(--emerald)' : syncStatus === 'error' ? 'var(--rose)' : 'var(--amber)'}`,
+        }} />
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 13 }}>
+            {syncStatus === 'synced' ? 'Synchronisé avec le cloud' : syncStatus === 'error' ? 'Erreur de synchronisation' : 'Connexion en cours…'}
           </div>
-        ))}
+          <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Firebase Firestore · Synchronisation multi-appareils active</div>
+        </div>
       </div>
+
+      <div className="surface" style={{ padding: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Profil business</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="set-grid">
+          <div><label className="lbl">Nom boutique</label><input className="field" defaultValue="Ryan's Gaming Hub" /></div>
+          <div><label className="lbl">Devise</label><input className="field" defaultValue="EUR (€)" /></div>
+          <div><label className="lbl">TVA par défaut</label><input className="field" defaultValue="21%" /></div>
+          <div><label className="lbl">Pays</label><input className="field" defaultValue="Belgique" /></div>
+        </div>
+      </div>
+
+      {/* Backup section */}
+      <div className="surface" style={{ padding: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 6 }}>Sauvegardes</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 18px' }}>Exportez une copie locale de tous vos produits.</p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button className="btn-primary" onClick={onBackupJSON} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Download size={15} strokeWidth={2.5} />
+            Exporter JSON
+          </button>
+          <button className="btn-ghost" onClick={onBackupCSV} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileDown size={15} strokeWidth={2.5} />
+            Exporter CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Security / Change password */}
+      <div className="surface" style={{ padding: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 6 }}>Sécurité</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 18px' }}>Gérez le mot de passe d'accès à l'application.</p>
+        {!showChangePwd ? (
+          <button className="btn-ghost" onClick={() => setShowChangePwd(true)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <LucideReact.Lock size={15} strokeWidth={2.5} />
+            Changer le mot de passe
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360 }}>
+            <div>
+              <label className="lbl">Nouveau mot de passe</label>
+              <input
+                className="field"
+                type="password"
+                placeholder="Entrez le nouveau mot de passe"
+                value={newPwd}
+                onChange={(e) => { setNewPwd(e.target.value); setPwdError(''); }}
+              />
+            </div>
+            <div>
+              <label className="lbl">Confirmer le mot de passe</label>
+              <input
+                className="field"
+                type="password"
+                placeholder="Confirmez le mot de passe"
+                value={confirmPwd}
+                onChange={(e) => { setConfirmPwd(e.target.value); setPwdError(''); }}
+              />
+            </div>
+            {pwdError && (
+              <div style={{ color: 'var(--rose)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertCircle size={13} /> {pwdError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn-primary" onClick={handleChangePwd}>Enregistrer</button>
+              <button className="btn-ghost" onClick={() => { setShowChangePwd(false); setNewPwd(''); setConfirmPwd(''); setPwdError(''); }}>Annuler</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="surface" style={{ padding: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Intégrations</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            { name: 'Shopify', status: 'connected', icon: '🛒' },
+            { name: 'AliExpress', status: 'connected', icon: '📦' },
+            { name: 'TikTok Ads', status: 'disconnected', icon: '🎥' },
+            { name: 'Meta Ads', status: 'connected', icon: '📱' },
+          ].map(i => (
+            <div key={i.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ fontSize: 22 }}>{i.icon}</div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{i.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{i.status === 'connected' ? 'Synchronisé' : 'Non connecté'}</div>
+                </div>
+              </div>
+              {i.status === 'connected'
+                ? <span className="badge badge-active"><Check size={10} strokeWidth={2.5} /> Connecté</span>
+                : <button className="btn-ghost">Connecter</button>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <style>{`@media (max-width: 640px){ .set-grid { grid-template-columns: 1fr !important; } }`}</style>
     </div>
-    <style>{`@media (max-width: 640px){ .set-grid { grid-template-columns: 1fr !important; } }`}</style>
-  </div>
-);
+  );
+};
 
 // ────────────────────────────────────────────────────────────────────────────
 //  MODAL — ADD PRODUCT
@@ -1814,15 +1920,28 @@ const Topbar = ({ view }) => {
 // ────────────────────────────────────────────────────────────────────────────
 //  PASSWORD GATE
 // ────────────────────────────────────────────────────────────────────────────
-const CORRECT_PASSWORD = "dropship2024";
+const DEFAULT_PASSWORD = "dropship2024";
 
-const PasswordGate = ({ onUnlock }) => {
+// Simple loading screen while Firebase connects
+const LoadingScreen = () => (
+  <div style={{ minHeight: '100vh', background: 'var(--bg-0)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+    <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'gradShift 3s ease infinite' }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    </div>
+    <div style={{ color: 'var(--text-2)', fontSize: 14 }}>Connexion au cloud…</div>
+  </div>
+);
+
+const PasswordGate = ({ correctPassword, onUnlock }) => {
   const [pwd, setPwd] = React.useState('');
   const [error, setError] = React.useState(false);
   const [shake, setShake] = React.useState(false);
 
   const attempt = () => {
-    if (pwd === CORRECT_PASSWORD) {
+    if (pwd === correctPassword) {
       onUnlock();
     } else {
       setError(true);
@@ -1913,19 +2032,9 @@ const PasswordGate = ({ onUnlock }) => {
 function App() {
   const [authenticated, setAuthenticated] = React.useState(false);
   const [view, setView] = useState('dashboard');
-  const [products, setProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('drophub_products');
-      return saved ? JSON.parse(saved) : [];
-    } catch(e) { return []; }
-  });
-
-  // Auto-save products to localStorage on every change
-  useEffect(() => {
-    try {
-      localStorage.setItem('drophub_products', JSON.stringify(products));
-    } catch(e) {}
-  }, [products]);
+  const [products, setProducts] = useState([]);
+  const [appPassword, setAppPassword] = useState(DEFAULT_PASSWORD);
+  const [syncStatus, setSyncStatus] = useState('loading');
   const [selected, setSelected] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [toast, setToast] = useState(null);
@@ -1935,16 +2044,91 @@ function App() {
     setTimeout(() => setToast(null), 2400);
   }, []);
 
+  // ── Firestore real-time sync ──────────────────────────────────────────────
+  useEffect(() => {
+    // Load password setting (non-blocking)
+    db.collection('data').doc('settings').get()
+      .then(doc => { if (doc.exists && doc.data().password) setAppPassword(doc.data().password); })
+      .catch(() => {});
+
+    // Subscribe to products in real-time
+    const unsub = db.collection('data').doc('products')
+      .onSnapshot(
+        (doc) => {
+          const items = doc.exists ? (doc.data().items || []) : [];
+          setProducts(items);
+          setSyncStatus('synced');
+          // Local fallback cache
+          try { localStorage.setItem('drophub_products', JSON.stringify(items)); } catch(e) {}
+        },
+        () => {
+          // On error, fall back to localStorage
+          setSyncStatus('error');
+          try {
+            const saved = localStorage.getItem('drophub_products');
+            if (saved) setProducts(JSON.parse(saved));
+          } catch(e) {}
+        }
+      );
+    return () => unsub();
+  }, []);
+
+  // ── Write helpers ─────────────────────────────────────────────────────────
+  const saveProducts = useCallback((list) => {
+    setSyncStatus('loading');
+    db.collection('data').doc('products').set({ items: list })
+      .then(() => setSyncStatus('synced'))
+      .catch(() => setSyncStatus('error'));
+    try { localStorage.setItem('drophub_products', JSON.stringify(list)); } catch(e) {}
+  }, []);
+
   const handleAdd = (p) => {
-    setProducts(ps => [p, ...ps]);
+    const next = [p, ...products];
+    setProducts(next);
+    saveProducts(next);
     showToast(`"${p.name}" ajouté à ton catalogue`);
   };
 
   const handleDelete = (id) => {
-    setProducts(ps => ps.filter(p => p.id !== id));
+    const next = products.filter(p => p.id !== id);
+    setProducts(next);
+    saveProducts(next);
     setSelected(null);
     showToast('Produit supprimé');
   };
+
+  const handlePasswordChange = useCallback((newPwd) => {
+    db.collection('data').doc('settings').set({ password: newPwd })
+      .then(() => { setAppPassword(newPwd); showToast('Mot de passe mis à jour ✓'); })
+      .catch(() => showToast('Erreur lors de la mise à jour'));
+  }, [showToast]);
+
+  const handleBackupJSON = useCallback(() => {
+    const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `drophub-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Sauvegarde JSON téléchargée');
+  }, [products, showToast]);
+
+  const handleBackupCSV = useCallback(() => {
+    let csv = 'Nom;SKU;Catégorie;Statut;Prix achat;Prix vente TTC;Frais;Unités vendues;CA;Bénéfice\n';
+    products.forEach(p => {
+      const m = computeProductMetrics(p);
+      csv += `${p.name};${p.sku};${p.category};${p.status};${p.purchasePrice.toFixed(2)};${p.sellPriceTTC.toFixed(2)};${m.totalFees.toFixed(2)};${p.unitsSold};${m.revenue.toFixed(2)};${m.totalProfit.toFixed(2)}\n`;
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `drophub-backup-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Sauvegarde CSV téléchargée');
+  }, [products, showToast]);
 
   const renderView = () => {
     switch (view) {
@@ -1953,12 +2137,13 @@ function App() {
       case 'accounting': return <Accounting products={products} />;
       case 'analytics': return <Analytics products={products} />;
       case 'categories': return <Categories products={products} />;
-      case 'settings': return <Settings />;
+      case 'settings': return <Settings onPasswordChange={handlePasswordChange} onBackupJSON={handleBackupJSON} onBackupCSV={handleBackupCSV} syncStatus={syncStatus} />;
       default: return null;
     }
   };
 
-  if (!authenticated) return <PasswordGate onUnlock={() => setAuthenticated(true)} />;
+  if (syncStatus === 'loading' && products.length === 0 && !authenticated) return <LoadingScreen />;
+  if (!authenticated) return <PasswordGate correctPassword={appPassword} onUnlock={() => setAuthenticated(true)} />;
 
   return (
     <div className="app-root">

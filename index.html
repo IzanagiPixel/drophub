@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07070B" />
+  <title>DropHub° Business OS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #07070B; }
+    #root { background: #07070B; }
+  </style>
+  <!-- React 18 -->
+  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Recharts -->
+  <script src="https://unpkg.com/recharts@2.9.0/umd/Recharts.js" crossorigin></script>
+  <!-- Lucide React -->
+  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.js" crossorigin></script>
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone@7.22.5/babel.min.js" crossorigin></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+
+const {
+  useState, useEffect, useMemo, useRef, useCallback
+} = React;
+
+const {
+  LayoutDashboard, Package, Calculator, BarChart3, Tags,
+  Search, Plus, ArrowUpRight, ArrowDownRight, MoreHorizontal,
+  TrendingUp, TrendingDown, ShoppingCart, Percent,
+  ExternalLink, Edit3, Trash2, ChevronRight, X, Check,
+  Download, Filter, Sparkles, Zap, Target,
+  Eye, Copy, AlertCircle, Flame, Gem, Layers, ArrowRight,
+  Wallet, Receipt, FileDown, ChevronDown, Activity,
+  Command, Bell, User, Menu, CircleDot,
+} = lucideReact;
+
+const {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+} = Recharts;
+
+// Settings alias
+const SettingsIcon = lucideReact.Settings;
+
+
+// ────────────────────────────────────────────────────────────────────────────
+//  DESIGN SYSTEM — injected once, used everywhere
+// ────────────────────────────────────────────────────────────────────────────
+
+const DesignSystem = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    :root {
+      --bg-0: #07070B;
+      --bg-1: #0B0B12;
+      --bg-2: #101018;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hi: rgba(255,255,255,0.06);
+      --surface-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.07);
+      --border-hi: rgba(255,255,255,0.12);
+      --text-0: #F5F5F7;
+      --text-1: rgba(245,245,247,0.68);
+      --text-2: rgba(245,245,247,0.42);
+      --text-3: rgba(245,245,247,0.25);
+      --violet: #8B5CF6;
+      --violet-hi: #A78BFA;
+      --indigo: #6366F1;
+      --cyan: #22D3EE;
+      --emerald: #34D399;
+      --amber: #FBBF24;
+      --rose: #FB7185;
+      --grad-accent: linear-gradient(135deg, #8B5CF6 0%, #6366F1 45%, #22D3EE 100%);
+      --grad-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+      --grad-danger: linear-gradient(135deg, #F43F5E 0%, #FB7185 100%);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+    html, body, #root { background: var(--bg-0); }
+
+    .app-root {
+      font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+      color: var(--text-0);
+      background: var(--bg-0);
+      min-height: 100vh;
+      font-feature-settings: "ss01", "ss02", "cv11";
+      letter-spacing: -0.01em;
+    }
+
+    .font-display { font-family: 'Instrument Serif', serif; font-weight: 400; letter-spacing: -0.02em; }
+    .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ── ATMOSPHERE ── */
+    .atmo {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .atmo::before, .atmo::after {
+      content:""; position: absolute; width: 60vw; height: 60vw;
+      border-radius: 50%; filter: blur(120px); opacity: .35;
+    }
+    .atmo::before {
+      background: radial-gradient(circle, #6366F1 0%, transparent 60%);
+      top: -20vw; left: -10vw;
+      animation: floatA 22s ease-in-out infinite;
+    }
+    .atmo::after {
+      background: radial-gradient(circle, #22D3EE 0%, transparent 60%);
+      bottom: -25vw; right: -15vw;
+      animation: floatB 28s ease-in-out infinite;
+    }
+    .atmo-third {
+      position: absolute; width: 40vw; height: 40vw;
+      top: 30%; left: 45%;
+      background: radial-gradient(circle, #8B5CF6 0%, transparent 65%);
+      filter: blur(140px); opacity: .18;
+      animation: floatC 32s ease-in-out infinite;
+    }
+    .atmo-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    }
+    .atmo-noise {
+      position: absolute; inset: 0; opacity: .035; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    @keyframes floatA { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,30px) scale(1.1)} }
+    @keyframes floatB { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-50px,-20px) scale(1.08)} }
+    @keyframes floatC { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-20px,40px) scale(0.95)} }
+
+    /* ── SURFACES ── */
+    .surface {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      border-radius: 20px;
+      position: relative;
+    }
+    .surface-hi {
+      background: var(--surface-hi);
+      border: 1px solid var(--border-hi);
+      backdrop-filter: blur(24px) saturate(150%);
+      border-radius: 20px;
+    }
+    .surface-glow::before {
+      content:""; position:absolute; inset:-1px; border-radius: inherit; padding:1px;
+      background: linear-gradient(135deg, rgba(139,92,246,.4), rgba(34,211,238,.15), transparent 60%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none;
+    }
+    .hairline {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+      height: 1px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      background: var(--grad-accent); background-size: 200% 200%;
+      color: #fff; border: none; padding: 10px 18px; border-radius: 12px;
+      font-weight: 600; font-size: 14px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 8px 24px -8px rgba(139,92,246,.5), inset 0 1px 0 rgba(255,255,255,.18);
+      transition: all .25s cubic-bezier(.2,.8,.2,1);
+      animation: gradShift 8s ease infinite;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 32px -8px rgba(139,92,246,.65), inset 0 1px 0 rgba(255,255,255,.22); }
+    .btn-primary:active { transform: translateY(0) scale(.98); }
+    @keyframes gradShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+    .btn-ghost {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-0); padding: 9px 14px; border-radius: 11px;
+      font-weight: 500; font-size: 13.5px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all .2s ease; backdrop-filter: blur(12px);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); border-color: var(--border-hi); transform: translateY(-1px); }
+
+    .btn-icon {
+      width: 36px; height: 36px; display:inline-flex; align-items:center; justify-content:center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-1); cursor: pointer;
+      transition: all .2s ease;
+    }
+    .btn-icon:hover { color: var(--text-0); background: var(--surface-hover); transform: translateY(-1px) scale(1.04); }
+
+    /* ── FORM ── */
+    .field {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 11px 14px; color: var(--text-0);
+      font-size: 14px; font-family: inherit; outline: none;
+      transition: all .2s ease;
+    }
+    .field:focus { border-color: rgba(139,92,246,.55); background: var(--surface-hi); box-shadow: 0 0 0 4px rgba(139,92,246,.12); }
+    .field::placeholder { color: var(--text-3); }
+    label.lbl { font-size: 12px; color: var(--text-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-bottom: 6px; display:block; }
+
+    /* ── NAV ── */
+    .nav-item {
+      position: relative; display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 12px; cursor: pointer;
+      color: var(--text-1); font-weight: 500; font-size: 14px;
+      transition: all .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .nav-item:hover { color: var(--text-0); background: var(--surface); }
+    .nav-item.active {
+      color: var(--text-0); background: var(--surface-hi);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .nav-item.active::before {
+      content:""; position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 18px; border-radius: 3px;
+      background: var(--grad-accent); box-shadow: 0 0 12px rgba(139,92,246,.7);
+    }
+    .nav-item .nav-icon { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+    .nav-item:hover .nav-icon { transform: scale(1.1) rotate(-4deg); }
+
+    /* ── STATUS DOT ── */
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .dot-live { background: var(--emerald); box-shadow: 0 0 0 4px rgba(52,211,153,.18); animation: pulseDot 2s infinite; }
+    @keyframes pulseDot { 0%,100%{box-shadow:0 0 0 4px rgba(52,211,153,.18)} 50%{box-shadow:0 0 0 8px rgba(52,211,153,.08)} }
+
+    /* ── KPI CARD ── */
+    .kpi {
+      position: relative; padding: 22px 22px 20px; border-radius: 22px;
+      background: var(--surface); border: 1px solid var(--border);
+      overflow: hidden; backdrop-filter: blur(20px) saturate(140%);
+      transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .3s;
+    }
+    .kpi:hover { transform: translateY(-3px); border-color: var(--border-hi); }
+    .kpi-shine {
+      position: absolute; top:0; right:0; width: 180px; height: 180px;
+      background: radial-gradient(circle at top right, rgba(139,92,246,.2), transparent 60%);
+      pointer-events: none;
+    }
+    .kpi-shine.cyan { background: radial-gradient(circle at top right, rgba(34,211,238,.2), transparent 60%); }
+    .kpi-shine.emerald { background: radial-gradient(circle at top right, rgba(52,211,153,.22), transparent 60%); }
+    .kpi-shine.amber { background: radial-gradient(circle at top right, rgba(251,191,36,.18), transparent 60%); }
+
+    .kpi-sparkle {
+      position: absolute; inset: 0; opacity: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.06) 50%, transparent 70%);
+      transition: opacity .5s, transform .8s;
+      transform: translateX(-100%);
+    }
+    .kpi:hover .kpi-sparkle { opacity: 1; transform: translateX(100%); }
+
+    /* ── PRODUCT CARD ── */
+    .prod-card {
+      position: relative; padding: 20px; border-radius: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      backdrop-filter: blur(20px) saturate(140%);
+      transition: all .35s cubic-bezier(.2,.8,.2,1);
+      cursor: pointer;
+      transform-style: preserve-3d; perspective: 900px;
+    }
+    .prod-card:hover {
+      background: var(--surface-hi); border-color: rgba(139,92,246,.35);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px -20px rgba(139,92,246,.4);
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .04em; line-height: 1;
+    }
+    .badge-winner { background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,146,60,.18)); color: #FCD34D; border: 1px solid rgba(251,191,36,.3); }
+    .badge-active { background: rgba(52,211,153,.14); color: #6EE7B7; border: 1px solid rgba(52,211,153,.3); }
+    .badge-test { background: rgba(34,211,238,.12); color: #67E8F9; border: 1px solid rgba(34,211,238,.28); }
+    .badge-idea { background: rgba(139,92,246,.14); color: #C4B5FD; border: 1px solid rgba(139,92,246,.3); }
+    .badge-abandoned { background: rgba(251,113,133,.1); color: #FDA4AF; border: 1px solid rgba(251,113,133,.28); }
+
+    /* ── TABLE ── */
+    .table-row {
+      display: grid; align-items: center; padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      transition: background .2s;
+    }
+    .table-row:hover { background: rgba(255,255,255,.02); }
+    .table-row:last-child { border-bottom: none; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.14); border: 2px solid transparent; background-clip: padding-box; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes drawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes backdropIn { from { opacity: 0; backdrop-filter: blur(0); } to { opacity: 1; backdrop-filter: blur(10px); } }
+    @keyframes shimmerBg {
+      0% { background-position: -800px 0; }
+      100% { background-position: 800px 0; }
+    }
+
+    .anim-fade-up { animation: fadeUp .6s cubic-bezier(.2,.8,.2,1) both; }
+    .anim-fade { animation: fadeIn .4s ease both; }
+    .anim-scale { animation: scaleIn .5s cubic-bezier(.2,.8,.2,1) both; }
+    .anim-slide-r { animation: slideInRight .5s cubic-bezier(.2,.8,.2,1) both; }
+
+    /* Staggered helper */
+    .stagger > * { animation: fadeUp .55s cubic-bezier(.2,.8,.2,1) both; }
+    .stagger > *:nth-child(1) { animation-delay: .03s; }
+    .stagger > *:nth-child(2) { animation-delay: .08s; }
+    .stagger > *:nth-child(3) { animation-delay: .13s; }
+    .stagger > *:nth-child(4) { animation-delay: .18s; }
+    .stagger > *:nth-child(5) { animation-delay: .23s; }
+    .stagger > *:nth-child(6) { animation-delay: .28s; }
+    .stagger > *:nth-child(7) { animation-delay: .33s; }
+    .stagger > *:nth-child(8) { animation-delay: .38s; }
+    .stagger > *:nth-child(9) { animation-delay: .43s; }
+    .stagger > *:nth-child(10) { animation-delay: .48s; }
+    .stagger > *:nth-child(11) { animation-delay: .53s; }
+    .stagger > *:nth-child(12) { animation-delay: .58s; }
+
+    /* View transition */
+    .view { animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both; }
+
+    /* Segmented */
+    .seg {
+      display: inline-flex; padding: 4px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; gap: 2px;
+    }
+    .seg button {
+      padding: 7px 14px; border-radius: 9px; border: none; background: transparent;
+      color: var(--text-1); font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all .2s;
+    }
+    .seg button:hover { color: var(--text-0); }
+    .seg button.on { background: var(--surface-hi); color: var(--text-0); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+
+    /* Progress bar */
+    .progress { height: 4px; background: var(--surface); border-radius: 999px; overflow: hidden; }
+    .progress > span {
+      display:block; height:100%; background: var(--grad-accent);
+      border-radius: 999px;
+      transition: width 1s cubic-bezier(.2,.8,.2,1);
+    }
+
+    /* Drawer */
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(5,5,10,.55); backdrop-filter: blur(10px); z-index: 80; animation: backdropIn .3s ease; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 92vw);
+      background: var(--bg-1); border-left: 1px solid var(--border-hi);
+      z-index: 90; animation: drawerIn .45s cubic-bezier(.2,.8,.2,1);
+      overflow-y: auto; box-shadow: -40px 0 80px -20px rgba(0,0,0,.6);
+    }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(5,5,10,.6); backdrop-filter: blur(10px); z-index: 80; animation: backdropIn .25s ease; display:flex; align-items:center; justify-content:center; padding: 24px; }
+    .modal { background: var(--bg-1); border: 1px solid var(--border-hi); border-radius: 24px; width: min(620px, 100%); max-height: 88vh; overflow: hidden; animation: modalIn .35s cubic-bezier(.2,.8,.2,1); box-shadow: 0 40px 80px -20px rgba(0,0,0,.6); display: flex; flex-direction: column; }
+
+    /* Tooltip dark */
+    .rt-tip {
+      background: rgba(12,12,18,.95) !important; border: 1px solid var(--border-hi) !important;
+      border-radius: 12px !important; box-shadow: 0 12px 30px -10px rgba(0,0,0,.5) !important;
+      backdrop-filter: blur(20px);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      background: var(--bg-1); border: 1px solid var(--border-hi);
+      border-radius: 14px; padding: 12px 16px; min-width: 260px;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,.5);
+      animation: slideInRight .35s cubic-bezier(.2,.8,.2,1);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    /* Mobile */
+    @media (max-width: 900px) {
+      .sidebar-wrap { display: none !important; }
+      .main-wrap { margin-left: 0 !important; }
+      .mobile-nav { display: flex !important; }
+    }
+  `}</style>
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+//  DEMO DATA (Ryan's niche: gaming ergonomics, RGB, productivity gadgets)
+// ────────────────────────────────────────────────────────────────────────────
+
+const DEMO_PRODUCTS = [];
+
+const MONTHLY_DATA = [
+  { month: "Jan", revenue: 0, expenses: 0, profit: 0 },
+  { month: "Fév", revenue: 0, expenses: 0, profit: 0 },
+  { month: "Mar", revenue: 0, expenses: 0, profit: 0 },
+  { month: "Avr", revenue: 0, expenses: 0, profit: 0 },
+  { month: "Mai", revenue: 0, expenses: 0, profit: 0 },
+  { month: "Jun", revenue: 0, expenses: 0, profit: 0 },
+];
+
+// ────────────────────────────────────────────────────────────────────────────
+//  UTILITIES
+// ────────────────────────────────────────────────────────────────────────────
+
+const computeProductMetrics = (p) => {
+  const totalFees = (p.adCost || 0) + (p.shippingCost || 0) + (p.platformFee || 0) + (p.otherFees || 0);
+  const unitMargin = p.sellPriceHT - p.purchasePrice;
+  const unitProfit = unitMargin - totalFees;
+  const revenue = p.sellPriceTTC * p.unitsSold;
+  const totalProfit = unitProfit * p.unitsSold;
+  const marginPct = p.sellPriceHT > 0 ? (unitMargin / p.sellPriceHT) * 100 : 0;
+  return { totalFees, unitMargin, unitProfit, revenue, totalProfit, marginPct };
+};
+
+const fmtEUR = (n, d = 2) => {
+  if (n == null || isNaN(n)) return '—';
+  return new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR', minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+};
+const fmtNum = (n) => new Intl.NumberFormat('fr-BE').format(n);
+
+const STATUS_CONFIG = {
+  winner:    { label: 'Winner',    cls: 'badge-winner',    icon: Flame },
+  active:    { label: 'Actif',     cls: 'badge-active',    icon: Activity },
+  test:      { label: 'En test',   cls: 'badge-test',      icon: Target },
+  idea:      { label: 'Idée',      cls: 'badge-idea',      icon: Sparkles },
+  abandoned: { label: 'Abandonné', cls: 'badge-abandoned', icon: X },
+};
+
+// Animated counter hook
+const useCountUp = (target, duration = 1200, start = true) => {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef();
+  const startRef = useRef();
+  useEffect(() => {
+    if (!start) return;
+    startRef.current = performance.now();
+    const tick = (t) => {
+      const elapsed = t - startRef.current;
+      const p = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(target * eased);
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration, start]);
+  return value;
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SMALL COMPONENTS
+// ────────────────────────────────────────────────────────────────────────────
+
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.idea;
+  const Icon = cfg.icon;
+  return (
+    <span className={`badge ${cfg.cls}`}>
+      <Icon size={10} strokeWidth={2.5} />
+      {cfg.label}
+    </span>
+  );
+};
+
+const Trend = ({ value, suffix = '%' }) => {
+  const up = value >= 0;
+  return (
+    <span style={{ color: up ? 'var(--emerald)' : 'var(--rose)', fontWeight: 600, fontSize: 12 }} className="num inline-flex items-center gap-1">
+      {up ? <ArrowUpRight size={12} strokeWidth={2.5} /> : <ArrowDownRight size={12} strokeWidth={2.5} />}
+      {up ? '+' : ''}{value.toFixed(1)}{suffix}
+    </span>
+  );
+};
+
+const KpiCard = ({ label, value, valueFmt, trend, icon: Icon, tone = 'violet', delay = 0 }) => {
+  const animated = useCountUp(value);
+  return (
+    <div className="kpi" style={{ animationDelay: `${delay}ms` }}>
+      <div className={`kpi-shine ${tone}`} />
+      <div className="kpi-sparkle" />
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
+          <div style={{
+            width: 38, height: 38, borderRadius: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: tone === 'violet' ? 'linear-gradient(135deg, rgba(139,92,246,.18), rgba(99,102,241,.1))' :
+                       tone === 'cyan'    ? 'linear-gradient(135deg, rgba(34,211,238,.18), rgba(14,165,233,.1))' :
+                       tone === 'emerald' ? 'linear-gradient(135deg, rgba(52,211,153,.18), rgba(16,185,129,.1))' :
+                                            'linear-gradient(135deg, rgba(251,191,36,.18), rgba(245,158,11,.1))',
+            border: '1px solid rgba(255,255,255,.08)',
+            color: tone === 'violet' ? 'var(--violet-hi)' :
+                   tone === 'cyan' ? 'var(--cyan)' :
+                   tone === 'emerald' ? 'var(--emerald)' : 'var(--amber)',
+          }}>
+            <Icon size={18} strokeWidth={2} />
+          </div>
+        </div>
+        <div>
+          <div className="num" style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {valueFmt ? valueFmt(animated) : Math.round(animated)}
+          </div>
+          {trend != null && (
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Trend value={trend} />
+              <span style={{ fontSize: 12, color: 'var(--text-3)' }}>vs. mois dernier</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SectionHeader = ({ title, subtitle, action }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18, gap: 16, flexWrap: 'wrap' }}>
+    <div>
+      <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>{title}</h2>
+      {subtitle && <p style={{ fontSize: 13.5, color: 'var(--text-2)', margin: '4px 0 0' }}>{subtitle}</p>}
+    </div>
+    {action}
+  </div>
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+//  CHARTS
+// ────────────────────────────────────────────────────────────────────────────
+
+const RevenueChart = ({ data }) => (
+  <ResponsiveContainer width="100%" height={240}>
+    <AreaChart data={data} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
+      <defs>
+        <linearGradient id="grad-rev" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8B5CF6" stopOpacity={.5} />
+          <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+        </linearGradient>
+        <linearGradient id="grad-prof" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22D3EE" stopOpacity={.35} />
+          <stop offset="100%" stopColor="#22D3EE" stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <XAxis dataKey="month" stroke="rgba(245,245,247,.3)" fontSize={11} tickLine={false} axisLine={false} />
+      <YAxis stroke="rgba(245,245,247,.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v / 1000}k`} />
+      <Tooltip
+        contentStyle={{ background: 'rgba(12,12,18,.95)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, backdropFilter: 'blur(20px)' }}
+        labelStyle={{ color: 'rgba(245,245,247,.6)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em' }}
+        itemStyle={{ color: '#F5F5F7', fontSize: 13, fontWeight: 500 }}
+        formatter={(v, n) => [fmtEUR(v, 0), n === 'revenue' ? 'CA' : 'Bénéfice']}
+      />
+      <Area type="monotone" dataKey="revenue" stroke="#8B5CF6" strokeWidth={2.2} fill="url(#grad-rev)" dot={false} activeDot={{ r: 5, strokeWidth: 2, fill: '#8B5CF6', stroke: '#fff' }} />
+      <Area type="monotone" dataKey="profit" stroke="#22D3EE" strokeWidth={2.2} fill="url(#grad-prof)" dot={false} activeDot={{ r: 5, strokeWidth: 2, fill: '#22D3EE', stroke: '#fff' }} />
+    </AreaChart>
+  </ResponsiveContainer>
+);
+
+const ExpensesPie = ({ data }) => {
+  const COLORS = ['#8B5CF6', '#22D3EE', '#FBBF24', '#FB7185'];
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <PieChart>
+        <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={88} paddingAngle={3} dataKey="value" stroke="none">
+          {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+        </Pie>
+        <Tooltip
+          contentStyle={{ background: 'rgba(12,12,18,.95)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12 }}
+          formatter={(v) => fmtEUR(v, 0)}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+};
+
+const CategoryBars = ({ data }) => (
+  <ResponsiveContainer width="100%" height={220}>
+    <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+      <defs>
+        <linearGradient id="grad-bar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="100%" stopColor="#6366F1" />
+        </linearGradient>
+      </defs>
+      <XAxis dataKey="name" stroke="rgba(245,245,247,.3)" fontSize={10} tickLine={false} axisLine={false} interval={0} />
+      <YAxis stroke="rgba(245,245,247,.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v / 1000}k`} />
+      <Tooltip
+        cursor={{ fill: 'rgba(255,255,255,.03)' }}
+        contentStyle={{ background: 'rgba(12,12,18,.95)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12 }}
+        formatter={(v) => fmtEUR(v, 0)}
+      />
+      <Bar dataKey="value" fill="url(#grad-bar)" radius={[8, 8, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+//  VIEWS
+// ────────────────────────────────────────────────────────────────────────────
+
+const Dashboard = ({ products, onOpenProduct }) => {
+  const totals = useMemo(() => {
+    let rev = 0, profit = 0, fees = 0, units = 0;
+    products.forEach(p => {
+      const m = computeProductMetrics(p);
+      rev += m.revenue; profit += m.totalProfit; fees += m.totalFees * p.unitsSold; units += p.unitsSold;
+    });
+    const avgMargin = products.length ? products.reduce((s, p) => s + computeProductMetrics(p).marginPct, 0) / products.length : 0;
+    return { rev, profit, fees, units, avgMargin };
+  }, [products]);
+
+  const expensesBreakdown = useMemo(() => {
+    let ad = 0, ship = 0, plat = 0, other = 0;
+    products.forEach(p => {
+      ad += p.adCost * p.unitsSold;
+      ship += p.shippingCost * p.unitsSold;
+      plat += p.platformFee * p.unitsSold;
+      other += p.otherFees * p.unitsSold;
+    });
+    return [
+      { name: 'Publicité', value: Math.round(ad) },
+      { name: 'Livraison', value: Math.round(ship) },
+      { name: 'Plateforme', value: Math.round(plat) },
+      { name: 'Autres', value: Math.round(other) },
+    ];
+  }, [products]);
+
+  const categoryData = useMemo(() => {
+    const m = {};
+    products.forEach(p => {
+      const r = computeProductMetrics(p).revenue;
+      m[p.category] = (m[p.category] || 0) + r;
+    });
+    return Object.entries(m).map(([name, value]) => ({ name, value: Math.round(value) }));
+  }, [products]);
+
+  const topProducts = useMemo(() => {
+    return [...products]
+      .map(p => ({ ...p, _m: computeProductMetrics(p) }))
+      .sort((a, b) => b._m.totalProfit - a._m.totalProfit)
+      .slice(0, 4);
+  }, [products]);
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Hero row */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-2)', fontSize: 13, fontWeight: 500 }}>
+          <span className="dot dot-live" />
+          <span>Mise à jour en temps réel · {new Date().toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+        </div>
+        <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', margin: '10px 0 0', lineHeight: 1.15 }}>
+          Bonjour Ryan. <span className="font-display" style={{ fontStyle: 'italic', background: 'var(--grad-accent)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Voici ton empire.</span>
+        </h1>
+      </div>
+
+      {/* KPI grid */}
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16 }}>
+        <KpiCard label="Chiffre d'affaires" value={totals.rev} valueFmt={(v) => fmtEUR(v, 0)} trend={17.3} icon={Wallet} tone="violet" />
+        <KpiCard label="Bénéfice net" value={totals.profit} valueFmt={(v) => fmtEUR(v, 0)} trend={21.8} icon={TrendingUp} tone="emerald" />
+        <KpiCard label="Unités vendues" value={totals.units} trend={12.4} icon={ShoppingCart} tone="cyan" />
+        <KpiCard label="Marge moyenne" value={totals.avgMargin} valueFmt={(v) => v.toFixed(1) + '%'} trend={3.2} icon={Percent} tone="amber" />
+      </div>
+
+      {/* Main grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 18 }} className="dash-main-grid">
+        {/* Revenue chart */}
+        <div className="surface anim-fade-up" style={{ padding: 22, animationDelay: '.3s' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Évolution 6 mois</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 0' }}>Revenu vs bénéfice</p>
+            </div>
+            <div style={{ display: 'flex', gap: 14, fontSize: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-1)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: '#8B5CF6', boxShadow: '0 0 8px #8B5CF6' }} /> CA
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-1)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: '#22D3EE', boxShadow: '0 0 8px #22D3EE' }} /> Bénéfice
+              </span>
+            </div>
+          </div>
+          <RevenueChart data={MONTHLY_DATA} />
+        </div>
+
+        {/* Expenses pie */}
+        <div className="surface anim-fade-up" style={{ padding: 22, animationDelay: '.4s' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Répartition des frais</h3>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 14px' }}>{fmtEUR(totals.fees, 0)} au total</p>
+          <ExpensesPie data={expensesBreakdown} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+            {expensesBreakdown.map((e, i) => (
+              <div key={e.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: ['#8B5CF6', '#22D3EE', '#FBBF24', '#FB7185'][i] }} />
+                  <span style={{ color: 'var(--text-1)' }}>{e.name}</span>
+                </span>
+                <span className="num" style={{ fontWeight: 600 }}>{fmtEUR(e.value, 0)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Category + Top products */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 18 }} className="dash-sub-grid">
+        <div className="surface anim-fade-up" style={{ padding: 22, animationDelay: '.5s' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Top catégories</h3>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 14px' }}>Chiffre d'affaires par niche</p>
+          <CategoryBars data={categoryData} />
+        </div>
+
+        <div className="surface anim-fade-up" style={{ padding: 22, animationDelay: '.55s' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Top produits</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 0' }}>Classés par bénéfice net</p>
+            </div>
+            <Gem size={16} style={{ color: 'var(--violet-hi)' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {topProducts.map((p, i) => (
+              <div
+                key={p.id}
+                onClick={() => onOpenProduct(p)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 6px',
+                  borderRadius: 12, cursor: 'pointer',
+                  transition: 'background .2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.03)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{
+                  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: i === 0 ? 'linear-gradient(135deg, rgba(251,191,36,.25), rgba(251,146,60,.15))' : 'var(--surface-hi)',
+                  border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  color: i === 0 ? '#FCD34D' : 'var(--text-1)',
+                }} className="num">
+                  {i + 1}
+                </div>
+                <div style={{ fontSize: 22 }}>{p.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-2)' }}>{p.unitsSold} ventes · {p.category}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="num" style={{ fontSize: 14, fontWeight: 700, color: 'var(--emerald)' }}>{fmtEUR(p._m.totalProfit, 0)}</div>
+                  <div className="num" style={{ fontSize: 11, color: 'var(--text-3)' }}>{p._m.marginPct.toFixed(0)}% marge</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <style>{`
+        @media (max-width: 1100px) {
+          .dash-main-grid, .dash-sub-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+const Products = ({ products, onOpenProduct, onNewProduct }) => {
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [view, setView] = useState('grid');
+
+  const filtered = useMemo(() => {
+    return products.filter(p => {
+      if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+      if (query && !p.name.toLowerCase().includes(query.toLowerCase()) && !p.sku.toLowerCase().includes(query.toLowerCase())) return false;
+      return true;
+    });
+  }, [products, query, statusFilter]);
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Produits</h1>
+        <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>{filtered.length} produit{filtered.length > 1 ? 's' : ''} · Pilote ton catalogue en temps réel</p>
+      </div>
+
+      {/* Filters bar */}
+      <div className="surface" style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+          <input
+            className="field"
+            style={{ paddingLeft: 40 }}
+            placeholder="Rechercher un produit ou SKU..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="seg">
+          {['all', 'winner', 'active', 'test', 'idea', 'abandoned'].map(s => (
+            <button key={s} className={statusFilter === s ? 'on' : ''} onClick={() => setStatusFilter(s)}>
+              {s === 'all' ? 'Tous' : STATUS_CONFIG[s].label}
+            </button>
+          ))}
+        </div>
+
+        <div className="seg">
+          <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}><Layers size={14} /></button>
+          <button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}><Menu size={14} /></button>
+        </div>
+
+        <button className="btn-primary" onClick={onNewProduct}>
+          <Plus size={16} strokeWidth={2.5} /> Ajouter
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="surface" style={{ padding: 60, textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, margin: '0 auto 16px', borderRadius: 20, background: 'var(--surface-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Package size={28} style={{ color: 'var(--text-2)' }} />
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 6 }}>Aucun produit trouvé</div>
+          <div style={{ color: 'var(--text-2)', fontSize: 13.5 }}>Ajuste tes filtres ou ajoute un nouveau produit.</div>
+        </div>
+      ) : view === 'grid' ? (
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 16 }}>
+          {filtered.map(p => (
+            <ProductCard key={p.id} product={p} onClick={() => onOpenProduct(p)} />
+          ))}
+        </div>
+      ) : (
+        <div className="surface" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="table-row" style={{ gridTemplateColumns: '1.7fr .8fr .8fr .7fr .8fr .6fr', background: 'rgba(255,255,255,.02)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-2)', fontWeight: 600 }}>
+            <div>Produit</div>
+            <div>Statut</div>
+            <div>Prix vente</div>
+            <div>Stock</div>
+            <div>Bénéfice</div>
+            <div></div>
+          </div>
+          <div className="stagger">
+            {filtered.map(p => {
+              const m = computeProductMetrics(p);
+              return (
+                <div
+                  key={p.id}
+                  className="table-row"
+                  style={{ gridTemplateColumns: '1.7fr .8fr .8fr .7fr .8fr .6fr', cursor: 'pointer' }}
+                  onClick={() => onOpenProduct(p)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--surface-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{p.emoji}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{p.sku}</div>
+                    </div>
+                  </div>
+                  <div><StatusBadge status={p.status} /></div>
+                  <div className="num" style={{ fontWeight: 600 }}>{fmtEUR(p.sellPriceTTC)}</div>
+                  <div className="num" style={{ color: p.stock < 20 ? 'var(--amber)' : 'var(--text-1)' }}>{p.stock}</div>
+                  <div className="num" style={{ fontWeight: 700, color: m.totalProfit >= 0 ? 'var(--emerald)' : 'var(--rose)' }}>{fmtEUR(m.totalProfit, 0)}</div>
+                  <div style={{ textAlign: 'right' }}><ChevronRight size={16} style={{ color: 'var(--text-3)' }} /></div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProductCard = ({ product, onClick }) => {
+  const m = computeProductMetrics(product);
+  const cardRef = useRef();
+
+  const onMove = (e) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `translateY(-4px) rotateX(${-y * 4}deg) rotateY(${x * 6}deg)`;
+  };
+  const onLeave = () => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.transform = '';
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      className="prod-card"
+      onClick={onClick}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{ transition: 'transform .2s cubic-bezier(.2,.8,.2,1), background .35s, border-color .35s, box-shadow .35s' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 16,
+          background: 'linear-gradient(135deg, rgba(139,92,246,.14), rgba(34,211,238,.06))',
+          border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 28,
+        }}>{product.emoji}</div>
+        <StatusBadge status={product.status} />
+      </div>
+
+      <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4, lineHeight: 1.3 }}>{product.name}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <span>{product.category}</span><span style={{ color: 'var(--text-3)' }}>·</span><span className="font-mono">{product.sku}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 2 }}>Prix TTC</div>
+          <div className="num" style={{ fontSize: 18, fontWeight: 700 }}>{fmtEUR(product.sellPriceTTC)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 2 }}>Marge</div>
+          <div className="num" style={{ fontSize: 18, fontWeight: 700, color: m.unitProfit >= 0 ? 'var(--emerald)' : 'var(--rose)' }}>{fmtEUR(m.unitProfit)}</div>
+        </div>
+      </div>
+
+      <div className="progress" style={{ marginBottom: 10 }}>
+        <span style={{ width: `${Math.max(0, Math.min(100, m.marginPct))}%` }} />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-2)' }}>
+        <span>{product.unitsSold} ventes</span>
+        <span className="num">{m.marginPct.toFixed(0)}% de marge</span>
+      </div>
+    </div>
+  );
+};
+
+const Accounting = ({ products }) => {
+  const [period, setPeriod] = useState('month');
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const csv = useMemo(() => {
+    let s = 'Produit;SKU;Catégorie;Statut;Prix achat;Prix vente TTC;Frais totaux;Unités;CA;Bénéfice net\n';
+    products.forEach(p => {
+      const m = computeProductMetrics(p);
+      s += `${p.name};${p.sku};${p.category};${p.status};${p.purchasePrice.toFixed(2)};${p.sellPriceTTC.toFixed(2)};${m.totalFees.toFixed(2)};${p.unitsSold};${m.revenue.toFixed(2)};${m.totalProfit.toFixed(2)}\n`;
+    });
+    return s;
+  }, [products]);
+
+  const downloadCSV = () => {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `comptabilite_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Export CSV téléchargé');
+  };
+
+  const quarterTotals = useMemo(() => {
+    return [
+      { label: 'T2 2026', revenue: 8650, expenses: 3180, profit: 5470, status: 'current' },
+      { label: 'T1 2026', revenue: 17940, expenses: 7040, profit: 10900, status: 'final' },
+      { label: 'T4 2025', revenue: 5050, expenses: 2000, profit: 3050, status: 'declared' },
+    ];
+  }, []);
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>
+            Comptabilité <span className="font-display" style={{ fontStyle: 'italic', color: 'var(--text-2)' }}>& déclarations</span>
+          </h1>
+          <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>Vue consolidée pour tes déclarations trimestrielles.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-ghost" onClick={downloadCSV}><FileDown size={15} /> CSV</button>
+          <button className="btn-primary" onClick={() => showToast('Export Excel généré')}><Download size={15} strokeWidth={2.5} /> Excel</button>
+        </div>
+      </div>
+
+      {/* Period toggle */}
+      <div className="seg" style={{ alignSelf: 'flex-start' }}>
+        {[['month', 'Mensuel'], ['quarter', 'Trimestriel'], ['year', 'Annuel']].map(([v, l]) => (
+          <button key={v} className={period === v ? 'on' : ''} onClick={() => setPeriod(v)}>{l}</button>
+        ))}
+      </div>
+
+      {/* Summary cards */}
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 16 }}>
+        {quarterTotals.map((q) => (
+          <div key={q.label} className="surface" style={{ padding: 22, position: 'relative', overflow: 'hidden' }}>
+            {q.status === 'current' && <div className="kpi-shine" />}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em' }}>{q.label}</span>
+              {q.status === 'declared' && <span className="badge badge-active"><Check size={10} strokeWidth={2.5} /> Déclaré</span>}
+              {q.status === 'final' && <span className="badge badge-winner"><AlertCircle size={10} strokeWidth={2.5} /> À déclarer</span>}
+              {q.status === 'current' && <span className="badge badge-test"><CircleDot size={10} /> En cours</span>}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}>CA</span>
+                <span className="num" style={{ fontWeight: 600 }}>{fmtEUR(q.revenue, 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Dépenses</span>
+                <span className="num" style={{ fontWeight: 600 }}>{fmtEUR(q.expenses, 0)}</span>
+              </div>
+              <div className="hairline" style={{ margin: '6px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>Bénéfice</span>
+                <span className="num" style={{ fontSize: 22, fontWeight: 700, background: 'var(--grad-accent)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{fmtEUR(q.profit, 0)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Monthly breakdown table */}
+      <div className="surface" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Synthèse mensuelle</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '3px 0 0' }}>Regroupement des ventes, frais et bénéfices par mois</p>
+          </div>
+          <span className="badge badge-active"><Check size={10} strokeWidth={2.5} /> Données vérifiées</span>
+        </div>
+        <div className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', background: 'rgba(255,255,255,.02)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-2)', fontWeight: 600 }}>
+          <div>Période</div>
+          <div>CA</div>
+          <div>Dépenses</div>
+          <div>Bénéfice</div>
+          <div style={{ textAlign: 'right' }}>À déclarer</div>
+        </div>
+        <div className="stagger">
+          {MONTHLY_DATA.slice().reverse().map(m => (
+            <div key={m.month} className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr' }}>
+              <div style={{ fontWeight: 600 }}>{m.month} 2026</div>
+              <div className="num">{fmtEUR(m.revenue, 0)}</div>
+              <div className="num" style={{ color: 'var(--rose)' }}>−{fmtEUR(m.expenses, 0)}</div>
+              <div className="num" style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtEUR(m.profit, 0)}</div>
+              <div className="num" style={{ textAlign: 'right', fontWeight: 600 }}>{fmtEUR(m.profit * 0.25, 0)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {toast && (
+        <div className="toast">
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #10B981, #34D399)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Check size={15} strokeWidth={2.5} />
+          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 500 }}>{toast}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Analytics = ({ products }) => {
+  const byStatus = useMemo(() => {
+    const m = {};
+    products.forEach(p => { m[p.status] = (m[p.status] || 0) + 1; });
+    return Object.entries(m).map(([name, value]) => ({ name: STATUS_CONFIG[name].label, value }));
+  }, [products]);
+
+  const topProfitability = useMemo(() => {
+    return [...products]
+      .map(p => ({ ...p, _m: computeProductMetrics(p) }))
+      .sort((a, b) => b._m.marginPct - a._m.marginPct)
+      .slice(0, 6);
+  }, [products]);
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Analytics</h1>
+        <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>Analyse profonde de ta performance business.</p>
+      </div>
+
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+        <div className="surface" style={{ padding: 22 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 12 }}>Répartition statuts</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie data={byStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" stroke="none" paddingAngle={3}>
+                {byStatus.map((_, i) => <Cell key={i} fill={['#FBBF24', '#34D399', '#22D3EE', '#8B5CF6', '#FB7185'][i % 5]} />)}
+              </Pie>
+              <Tooltip contentStyle={{ background: 'rgba(12,12,18,.95)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, justifyContent: 'center' }}>
+            {byStatus.map((s, i) => (
+              <span key={s.name} style={{ fontSize: 11.5, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: ['#FBBF24', '#34D399', '#22D3EE', '#8B5CF6', '#FB7185'][i % 5] }} />
+                {s.name} ({s.value})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="surface" style={{ padding: 22 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 12 }}>Évolution bénéfice</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={MONTHLY_DATA}>
+              <defs>
+                <linearGradient id="grad-prof2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#34D399" stopOpacity={.5} />
+                  <stop offset="100%" stopColor="#34D399" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" stroke="rgba(245,245,247,.3)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="rgba(245,245,247,.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v / 1000}k`} />
+              <Tooltip contentStyle={{ background: 'rgba(12,12,18,.95)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12 }} formatter={(v) => fmtEUR(v, 0)} />
+              <Area type="monotone" dataKey="profit" stroke="#34D399" strokeWidth={2.2} fill="url(#grad-prof2)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="surface" style={{ padding: 22 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 4 }}>Stock critique</h3>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: '0 0 12px' }}>Produits sous le seuil d'alerte</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {products.filter(p => p.stock > 0 && p.stock < 40).slice(0, 4).map(p => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontSize: 20 }}>{p.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                  <div className="progress" style={{ marginTop: 4 }}>
+                    <span style={{ width: `${(p.stock / 100) * 100}%`, background: p.stock < 25 ? 'var(--amber)' : 'var(--grad-accent)' }} />
+                  </div>
+                </div>
+                <div className="num" style={{ fontSize: 13, fontWeight: 700, color: p.stock < 25 ? 'var(--amber)' : 'var(--text-1)' }}>{p.stock}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Profitability leaderboard */}
+      <div className="surface" style={{ padding: 22 }}>
+        <SectionHeader title="Leaderboard marge" subtitle="Les produits qui rapportent le plus par vente" />
+        <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {topProfitability.map((p, i) => (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 4px' }}>
+              <div style={{
+                width: 30, height: 30, borderRadius: 8,
+                background: i === 0 ? 'linear-gradient(135deg, #FBBF24, #FB923C)' : 'var(--surface-hi)',
+                color: i === 0 ? '#1a1100' : 'var(--text-1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: 13,
+              }} className="num">{i + 1}</div>
+              <div style={{ fontSize: 22 }}>{p.emoji}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                <div className="progress" style={{ marginTop: 6, maxWidth: 380 }}>
+                  <span style={{ width: `${p._m.marginPct}%` }} />
+                </div>
+              </div>
+              <div className="num" style={{ fontWeight: 700, fontSize: 16, minWidth: 60, textAlign: 'right' }}>{p._m.marginPct.toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Categories = ({ products }) => {
+  const cats = useMemo(() => {
+    const m = {};
+    products.forEach(p => {
+      if (!m[p.category]) m[p.category] = { name: p.category, products: [], revenue: 0, profit: 0 };
+      const pm = computeProductMetrics(p);
+      m[p.category].products.push(p);
+      m[p.category].revenue += pm.revenue;
+      m[p.category].profit += pm.totalProfit;
+    });
+    return Object.values(m);
+  }, [products]);
+
+  const icons = { 'Ergonomie': '🪑', 'Décoration RGB': '💡', 'Productivité': '⚡', 'Gaming': '🎮' };
+
+  return (
+    <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div>
+        <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Catégories</h1>
+        <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>{cats.length} niches structurent ton catalogue.</p>
+      </div>
+
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        {cats.map(c => (
+          <div key={c.name} className="surface" style={{ padding: 22, position: 'relative', overflow: 'hidden' }}>
+            <div className="kpi-shine" style={{ width: 220, height: 220 }} />
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 14,
+                background: 'linear-gradient(135deg, rgba(139,92,246,.18), rgba(34,211,238,.08))',
+                border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 26, marginBottom: 14,
+              }}>{icons[c.name] || '📦'}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4, letterSpacing: '-0.02em' }}>{c.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 14 }}>{c.products.length} produit{c.products.length > 1 ? 's' : ''}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 3 }}>CA</div>
+                  <div className="num" style={{ fontSize: 16, fontWeight: 700 }}>{fmtEUR(c.revenue, 0)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 3 }}>Bénéfice</div>
+                  <div className="num" style={{ fontSize: 16, fontWeight: 700, color: 'var(--emerald)' }}>{fmtEUR(c.profit, 0)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Settings = () => (
+  <div className="view" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+    <div>
+      <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>Paramètres</h1>
+      <p style={{ color: 'var(--text-2)', margin: '6px 0 0', fontSize: 14 }}>Configure ton espace de travail.</p>
+    </div>
+
+    <div className="surface" style={{ padding: 24 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Profil business</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="set-grid">
+        <div><label className="lbl">Nom boutique</label><input className="field" defaultValue="Ryan's Gaming Hub" /></div>
+        <div><label className="lbl">Devise</label><input className="field" defaultValue="EUR (€)" /></div>
+        <div><label className="lbl">TVA par défaut</label><input className="field" defaultValue="21%" /></div>
+        <div><label className="lbl">Pays</label><input className="field" defaultValue="Belgique" /></div>
+      </div>
+    </div>
+
+    <div className="surface" style={{ padding: 24 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 14 }}>Intégrations</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {[
+          { name: 'Shopify', status: 'connected', icon: '🛒' },
+          { name: 'AliExpress', status: 'connected', icon: '📦' },
+          { name: 'TikTok Ads', status: 'disconnected', icon: '🎥' },
+          { name: 'Meta Ads', status: 'connected', icon: '📱' },
+        ].map(i => (
+          <div key={i.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 22 }}>{i.icon}</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{i.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{i.status === 'connected' ? 'Synchronisé' : 'Non connecté'}</div>
+              </div>
+            </div>
+            {i.status === 'connected'
+              ? <span className="badge badge-active"><Check size={10} strokeWidth={2.5} /> Connecté</span>
+              : <button className="btn-ghost">Connecter</button>}
+          </div>
+        ))}
+      </div>
+    </div>
+    <style>{`@media (max-width: 640px){ .set-grid { grid-template-columns: 1fr !important; } }`}</style>
+  </div>
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+//  MODAL — ADD PRODUCT
+// ────────────────────────────────────────────────────────────────────────────
+
+const AddProductModal = ({ open, onClose, onSave }) => {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    name: '', emoji: '📦', category: 'Gaming', sku: '', supplier: '',
+    supplierLink: '', shopLink: '', status: 'idea',
+    purchasePrice: '', sellPriceHT: '', sellPriceTTC: '',
+    adCost: '', shippingCost: '', platformFee: '', otherFees: '',
+    stock: '', notes: '',
+  });
+
+  useEffect(() => {
+    if (open) { setStep(0); setForm({
+      name: '', emoji: '📦', category: 'Gaming', sku: '', supplier: '',
+      supplierLink: '', shopLink: '', status: 'idea',
+      purchasePrice: '', sellPriceHT: '', sellPriceTTC: '',
+      adCost: '', shippingCost: '', platformFee: '', otherFees: '',
+      stock: '', notes: '',
+    }); }
+  }, [open]);
+
+  if (!open) return null;
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const save = () => {
+    const product = {
+      id: 'p-' + Date.now(),
+      name: form.name || 'Nouveau produit',
+      emoji: form.emoji || '📦',
+      supplier: form.supplier || 'AliExpress',
+      supplierLink: form.supplierLink,
+      shopLink: form.shopLink,
+      sku: form.sku || 'SKU-' + Math.floor(Math.random() * 9999),
+      category: form.category,
+      subCategory: '',
+      status: form.status,
+      purchasePrice: parseFloat(form.purchasePrice) || 0,
+      sellPriceHT: parseFloat(form.sellPriceHT) || 0,
+      sellPriceTTC: parseFloat(form.sellPriceTTC) || 0,
+      adCost: parseFloat(form.adCost) || 0,
+      shippingCost: parseFloat(form.shippingCost) || 0,
+      platformFee: parseFloat(form.platformFee) || 0,
+      otherFees: parseFloat(form.otherFees) || 0,
+      stock: parseInt(form.stock) || 0,
+      unitsSold: 0,
+      notes: form.notes,
+      addedAt: new Date().toISOString().slice(0, 10),
+      updatedAt: new Date().toISOString().slice(0, 10),
+    };
+    onSave(product);
+    onClose();
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--grad-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Plus size={18} strokeWidth={2.5} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Nouveau produit</div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Étape {step + 1} sur 3</div>
+            </div>
+          </div>
+          <button className="btn-icon" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        {/* Progress */}
+        <div style={{ padding: '0 24px', marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{
+                flex: 1, height: 3, borderRadius: 999,
+                background: i <= step ? 'var(--grad-accent)' : 'var(--surface-hi)',
+                transition: 'background .4s',
+              }} />
+            ))}
+          </div>
+        </div>
+
+        <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
+          {step === 0 && (
+            <div className="anim-fade" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label className="lbl">Nom du produit</label>
+                <input className="field" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex: Tapis XXL RGB gaming" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: 12 }}>
+                <div>
+                  <label className="lbl">Emoji</label>
+                  <input className="field" value={form.emoji} onChange={(e) => set('emoji', e.target.value)} style={{ textAlign: 'center', fontSize: 20, width: 60 }} />
+                </div>
+                <div>
+                  <label className="lbl">SKU</label>
+                  <input className="field" value={form.sku} onChange={(e) => set('sku', e.target.value)} placeholder="GAM-MAT-10" />
+                </div>
+                <div>
+                  <label className="lbl">Catégorie</label>
+                  <select className="field" value={form.category} onChange={(e) => set('category', e.target.value)}>
+                    <option>Gaming</option>
+                    <option>Ergonomie</option>
+                    <option>Décoration RGB</option>
+                    <option>Productivité</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="lbl">Fournisseur</label>
+                <input className="field" value={form.supplier} onChange={(e) => set('supplier', e.target.value)} placeholder="AliExpress / CJ / Spocket..." />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label className="lbl">Lien fournisseur</label>
+                  <input className="field" value={form.supplierLink} onChange={(e) => set('supplierLink', e.target.value)} placeholder="https://..." />
+                </div>
+                <div>
+                  <label className="lbl">Lien boutique</label>
+                  <input className="field" value={form.shopLink} onChange={(e) => set('shopLink', e.target.value)} placeholder="https://..." />
+                </div>
+              </div>
+              <div>
+                <label className="lbl">Statut</label>
+                <div className="seg" style={{ width: '100%', display: 'flex' }}>
+                  {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                    <button key={k} className={form.status === k ? 'on' : ''} onClick={() => set('status', k)} style={{ flex: 1 }}>
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="anim-fade" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div><label className="lbl">Prix achat</label><input className="field" type="number" step="0.01" value={form.purchasePrice} onChange={(e) => set('purchasePrice', e.target.value)} placeholder="0.00" /></div>
+                <div><label className="lbl">Prix vente HT</label><input className="field" type="number" step="0.01" value={form.sellPriceHT} onChange={(e) => set('sellPriceHT', e.target.value)} placeholder="0.00" /></div>
+                <div><label className="lbl">Prix vente TTC</label><input className="field" type="number" step="0.01" value={form.sellPriceTTC} onChange={(e) => set('sellPriceTTC', e.target.value)} placeholder="0.00" /></div>
+              </div>
+              <div className="hairline" style={{ margin: '4px 0' }} />
+              <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em' }}>Frais unitaires</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div><label className="lbl">Publicité</label><input className="field" type="number" step="0.01" value={form.adCost} onChange={(e) => set('adCost', e.target.value)} placeholder="0.00" /></div>
+                <div><label className="lbl">Livraison</label><input className="field" type="number" step="0.01" value={form.shippingCost} onChange={(e) => set('shippingCost', e.target.value)} placeholder="0.00" /></div>
+                <div><label className="lbl">Plateforme</label><input className="field" type="number" step="0.01" value={form.platformFee} onChange={(e) => set('platformFee', e.target.value)} placeholder="0.00" /></div>
+                <div><label className="lbl">Autres</label><input className="field" type="number" step="0.01" value={form.otherFees} onChange={(e) => set('otherFees', e.target.value)} placeholder="0.00" /></div>
+              </div>
+              {/* Live preview */}
+              {(form.sellPriceHT && form.purchasePrice) && (
+                <div className="surface-hi" style={{ padding: 14, borderRadius: 14 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Aperçu calculé</div>
+                  {(() => {
+                    const fees = (+form.adCost || 0) + (+form.shippingCost || 0) + (+form.platformFee || 0) + (+form.otherFees || 0);
+                    const margin = (+form.sellPriceHT || 0) - (+form.purchasePrice || 0);
+                    const profit = margin - fees;
+                    return (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+                        <div><div style={{ fontSize: 12, color: 'var(--text-2)' }}>Marge brute</div><div className="num" style={{ fontWeight: 700 }}>{fmtEUR(margin)}</div></div>
+                        <div><div style={{ fontSize: 12, color: 'var(--text-2)' }}>Total frais</div><div className="num" style={{ fontWeight: 700, color: 'var(--rose)' }}>−{fmtEUR(fees)}</div></div>
+                        <div><div style={{ fontSize: 12, color: 'var(--text-2)' }}>Bénéfice net</div><div className="num" style={{ fontWeight: 700, color: profit >= 0 ? 'var(--emerald)' : 'var(--rose)' }}>{fmtEUR(profit)}</div></div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="anim-fade" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div><label className="lbl">Stock initial</label><input className="field" type="number" value={form.stock} onChange={(e) => set('stock', e.target.value)} placeholder="0" /></div>
+              <div><label className="lbl">Notes internes</label><textarea className="field" rows={5} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Stratégie, idées, infos fournisseur..." style={{ resize: 'vertical' }} /></div>
+              <div className="surface-hi" style={{ padding: 16, borderRadius: 14, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, rgba(139,92,246,.25), rgba(34,211,238,.15))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={16} style={{ color: 'var(--violet-hi)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 3 }}>Prêt à ajouter</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.5 }}>Tu pourras modifier les données de vente et ajouter des ventes à tout moment depuis la fiche produit.</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <button className="btn-ghost" onClick={step === 0 ? onClose : () => setStep(s => s - 1)}>
+            {step === 0 ? 'Annuler' : 'Retour'}
+          </button>
+          {step < 2 ? (
+            <button className="btn-primary" onClick={() => setStep(s => s + 1)}>Continuer <ArrowRight size={15} strokeWidth={2.5} /></button>
+          ) : (
+            <button className="btn-primary" onClick={save}><Check size={15} strokeWidth={2.5} /> Ajouter le produit</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+//  DRAWER — PRODUCT DETAIL
+// ────────────────────────────────────────────────────────────────────────────
+
+const ProductDrawer = ({ product, onClose, onDelete }) => {
+  if (!product) return null;
+  const m = computeProductMetrics(product);
+
+  return (
+    <>
+      <div className="drawer-backdrop" onClick={onClose} />
+      <div className="drawer">
+        <div style={{ padding: '20px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-1)', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(139,92,246,.2), rgba(34,211,238,.1))',
+              border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 26,
+            }}>{product.emoji}</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>{product.name}</div>
+              <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>{product.sku}</div>
+            </div>
+          </div>
+          <button className="btn-icon" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        <div style={{ padding: 26, display: 'flex', flexDirection: 'column', gap: 22 }}>
+          {/* Status + categories */}
+          <div className="stagger" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <StatusBadge status={product.status} />
+            <span className="badge" style={{ background: 'var(--surface-hi)', color: 'var(--text-1)', border: '1px solid var(--border)' }}>{product.category}</span>
+            {product.subCategory && <span className="badge" style={{ background: 'var(--surface)', color: 'var(--text-2)', border: '1px solid var(--border)' }}>{product.subCategory}</span>}
+          </div>
+
+          {/* Big revenue */}
+          <div className="surface-hi anim-fade-up" style={{ padding: 22, position: 'relative', overflow: 'hidden' }}>
+            <div className="kpi-shine" />
+            <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>Bénéfice total</div>
+            <div className="num" style={{ fontSize: 42, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1, marginTop: 6, background: m.totalProfit >= 0 ? 'var(--grad-success)' : 'var(--grad-danger)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              {fmtEUR(m.totalProfit)}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6 }}>
+              sur {product.unitsSold} vente{product.unitsSold > 1 ? 's' : ''} · marge {m.marginPct.toFixed(1)}%
+            </div>
+          </div>
+
+          {/* Metrics grid */}
+          <div className="stagger" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { lbl: 'Prix achat', v: fmtEUR(product.purchasePrice) },
+              { lbl: 'Prix vente HT', v: fmtEUR(product.sellPriceHT) },
+              { lbl: 'Prix vente TTC', v: fmtEUR(product.sellPriceTTC) },
+              { lbl: 'Bénéfice unitaire', v: fmtEUR(m.unitProfit), color: m.unitProfit >= 0 ? 'var(--emerald)' : 'var(--rose)' },
+              { lbl: 'Chiffre d\'affaires', v: fmtEUR(m.revenue) },
+              { lbl: 'Stock', v: product.stock, color: product.stock < 20 ? 'var(--amber)' : undefined },
+            ].map(k => (
+              <div key={k.lbl} className="surface" style={{ padding: 14 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>{k.lbl}</div>
+                <div className="num" style={{ fontSize: 17, fontWeight: 700, marginTop: 4, color: k.color }}>{k.v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Fees breakdown */}
+          <div className="surface" style={{ padding: 18 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Décomposition des frais</div>
+            {[
+              { l: 'Publicité', v: product.adCost, c: '#8B5CF6' },
+              { l: 'Livraison', v: product.shippingCost, c: '#22D3EE' },
+              { l: 'Plateforme', v: product.platformFee, c: '#FBBF24' },
+              { l: 'Autres', v: product.otherFees, c: '#FB7185' },
+            ].map(f => {
+              const pct = m.totalFees > 0 ? (f.v / m.totalFees) * 100 : 0;
+              return (
+                <div key={f.l} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
+                    <span style={{ color: 'var(--text-1)' }}>{f.l}</span>
+                    <span className="num" style={{ fontWeight: 600 }}>{fmtEUR(f.v)}</span>
+                  </div>
+                  <div className="progress">
+                    <span style={{ width: `${pct}%`, background: f.c }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Links */}
+          {(product.supplierLink || product.shopLink) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {product.supplierLink && (
+                <a href={product.supplierLink} target="_blank" rel="noreferrer" className="surface" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit', transition: 'all .2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
+                >
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏭</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Fiche fournisseur</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-2)' }}>{product.supplier}</div>
+                  </div>
+                  <ExternalLink size={14} style={{ color: 'var(--text-2)' }} />
+                </a>
+              )}
+              {product.shopLink && (
+                <a href={product.shopLink} target="_blank" rel="noreferrer" className="surface" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
+                >
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🛒</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Fiche boutique</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-2)' }}>Voir en ligne</div>
+                  </div>
+                  <ExternalLink size={14} style={{ color: 'var(--text-2)' }} />
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Notes */}
+          {product.notes && (
+            <div className="surface" style={{ padding: 16 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600, marginBottom: 6 }}>Notes internes</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-1)', lineHeight: 1.55 }}>{product.notes}</div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
+            <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center' }}><Edit3 size={14} /> Modifier</button>
+            <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center', color: 'var(--rose)' }} onClick={() => onDelete(product.id)}>
+              <Trash2 size={14} /> Supprimer
+            </button>
+          </div>
+
+          <div style={{ fontSize: 11.5, color: 'var(--text-3)', textAlign: 'center', paddingTop: 4 }}>
+            Ajouté le {product.addedAt} · Mis à jour le {product.updatedAt}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+//  SHELL
+// ────────────────────────────────────────────────────────────────────────────
+
+const Sidebar = ({ active, onChange, onAdd }) => {
+  const items = [
+    { k: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+    { k: 'products', label: 'Produits', Icon: Package },
+    { k: 'accounting', label: 'Comptabilité', Icon: Calculator },
+    { k: 'analytics', label: 'Analytics', Icon: BarChart3 },
+    { k: 'categories', label: 'Catégories', Icon: Tags },
+    { k: 'settings', label: 'Paramètres', Icon: SettingsIcon },
+  ];
+  return (
+    <aside className="sidebar-wrap" style={{
+      position: 'fixed', top: 0, left: 0, bottom: 0, width: 248, padding: '20px 16px',
+      zIndex: 10, borderRight: '1px solid var(--border)',
+      background: 'rgba(11,11,18,.55)', backdropFilter: 'blur(24px) saturate(140%)',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '0 6px 20px', borderBottom: '1px solid var(--border)', marginBottom: 14 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 11,
+          background: 'var(--grad-accent)', backgroundSize: '200% 200%',
+          animation: 'gradShift 6s ease infinite',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 24px -8px rgba(139,92,246,.6), inset 0 1px 0 rgba(255,255,255,.2)',
+        }}>
+          <Zap size={18} strokeWidth={2.5} fill="white" />
+        </div>
+        <div style={{ lineHeight: 1.1 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>
+            DropHub<span className="font-display" style={{ fontStyle: 'italic', marginLeft: 2 }}>°</span>
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-2)', fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 2 }}>Business OS</div>
+        </div>
+      </div>
+
+      {/* Quick add */}
+      <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 14 }} onClick={onAdd}>
+        <Plus size={15} strokeWidth={2.8} /> Nouveau produit
+      </button>
+
+      {/* Nav items */}
+      <nav className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {items.map((it) => {
+          const isActive = active === it.k;
+          return (
+            <div key={it.k} className={`nav-item ${isActive ? 'active' : ''}`} onClick={() => onChange(it.k)}>
+              <it.Icon size={17} strokeWidth={1.8} className="nav-icon" />
+              <span>{it.label}</span>
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* Footer card */}
+      <div style={{ marginTop: 'auto' }}>
+        <div className="surface-hi" style={{ padding: 14, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 110, height: 110, background: 'radial-gradient(circle, rgba(139,92,246,.35), transparent 70%)', filter: 'blur(10px)' }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Pro illimité</div>
+            <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 10, lineHeight: 1.4 }}>Produits, exports & insights sans limite.</div>
+            <button style={{
+              background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)',
+              width: '100%', padding: '7px 10px', borderRadius: 8, color: '#fff',
+              fontSize: 11.5, fontWeight: 600, cursor: 'pointer', transition: 'all .2s',
+            }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.12)'}
+               onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.08)'}>
+              Upgrade →
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+const MobileNav = ({ active, onChange, onAdd }) => {
+  const items = [
+    { k: 'dashboard', Icon: LayoutDashboard },
+    { k: 'products', Icon: Package },
+    { k: 'add', Icon: Plus, primary: true },
+    { k: 'accounting', Icon: Calculator },
+    { k: 'analytics', Icon: BarChart3 },
+  ];
+  return (
+    <div className="mobile-nav" style={{
+      display: 'none', position: 'fixed', bottom: 14, left: 14, right: 14, zIndex: 20,
+      background: 'rgba(11,11,18,.85)', backdropFilter: 'blur(24px) saturate(140%)',
+      border: '1px solid var(--border-hi)', borderRadius: 18, padding: 6,
+      justifyContent: 'space-around', alignItems: 'center',
+      boxShadow: '0 20px 40px -10px rgba(0,0,0,.5)',
+    }}>
+      {items.map(it => (
+        <button key={it.k}
+          onClick={() => it.k === 'add' ? onAdd() : onChange(it.k)}
+          style={{
+            width: it.primary ? 46 : 42, height: it.primary ? 46 : 42,
+            borderRadius: it.primary ? 14 : 12,
+            background: it.primary ? 'var(--grad-accent)' : (active === it.k ? 'var(--surface-hi)' : 'transparent'),
+            border: 'none', color: it.primary ? '#fff' : (active === it.k ? '#fff' : 'var(--text-2)'),
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', transition: 'all .2s',
+            boxShadow: it.primary ? '0 8px 20px -4px rgba(139,92,246,.5)' : 'none',
+          }}>
+          <it.Icon size={it.primary ? 20 : 18} strokeWidth={it.primary ? 2.6 : 2} />
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const Topbar = ({ view }) => {
+  const labels = {
+    dashboard: 'Dashboard', products: 'Produits', accounting: 'Comptabilité',
+    analytics: 'Analytics', categories: 'Catégories', settings: 'Paramètres',
+  };
+  return (
+    <header style={{
+      position: 'sticky', top: 0, zIndex: 5,
+      padding: '14px 24px',
+      background: 'rgba(7,7,11,.65)', backdropFilter: 'blur(20px) saturate(140%)',
+      borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', gap: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-2)', fontSize: 13 }}>
+        <span>DropHub</span>
+        <ChevronRight size={13} />
+        <span style={{ color: 'var(--text-0)', fontWeight: 600 }}>{labels[view]}</span>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', maxWidth: 380, width: '100%' }} className="search-hide">
+          <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+          <input
+            className="field"
+            style={{ paddingLeft: 40, paddingRight: 64, fontSize: 13 }}
+            placeholder="Rechercher partout..."
+          />
+          <span style={{
+            position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+            display: 'flex', alignItems: 'center', gap: 3,
+            background: 'var(--surface-hi)', border: '1px solid var(--border)',
+            padding: '3px 7px', borderRadius: 6, fontSize: 10.5, color: 'var(--text-2)',
+          }}>
+            <Command size={10} /> K
+          </span>
+        </div>
+      </div>
+
+      <button className="btn-icon"><Bell size={15} /></button>
+      <div style={{
+        width: 34, height: 34, borderRadius: 10,
+        background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer',
+        boxShadow: '0 6px 16px -4px rgba(139,92,246,.5)',
+      }}>R</div>
+      <style>{`@media (max-width: 760px) { .search-hide { display: none; } }`}</style>
+    </header>
+  );
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ROOT
+// ────────────────────────────────────────────────────────────────────────────
+
+
+// ────────────────────────────────────────────────────────────────────────────
+//  PASSWORD GATE
+// ────────────────────────────────────────────────────────────────────────────
+const CORRECT_PASSWORD = "dropship2024";
+
+const PasswordGate = ({ onUnlock }) => {
+  const [pwd, setPwd] = React.useState('');
+  const [error, setError] = React.useState(false);
+  const [shake, setShake] = React.useState(false);
+
+  const attempt = () => {
+    if (pwd === CORRECT_PASSWORD) {
+      onUnlock();
+    } else {
+      setError(true);
+      setShake(true);
+      setPwd('');
+      setTimeout(() => { setShake(false); setError(false); }, 1800);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh', background: 'var(--bg-0)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+      position: 'relative',
+    }}>
+      <div className="atmo">
+        <div className="atmo-grid" />
+        <div className="atmo-third" />
+        <div className="atmo-noise" />
+      </div>
+      <div className="surface surface-glow" style={{
+        width: '100%', maxWidth: 400, padding: '40px 36px',
+        position: 'relative', zIndex: 1,
+        animation: shake ? 'shakeX 0.4s ease' : 'scaleIn .5s cubic-bezier(.2,.8,.2,1)',
+        textAlign: 'center',
+      }}>
+        <style>{`
+          @keyframes shakeX {
+            0%,100%{transform:translateX(0)}
+            20%{transform:translateX(-10px)}
+            40%{transform:translateX(10px)}
+            60%{transform:translateX(-8px)}
+            80%{transform:translateX(8px)}
+          }
+        `}</style>
+        <div style={{
+          width: 64, height: 64, borderRadius: 18,
+          background: 'var(--grad-accent)', backgroundSize: '200% 200%',
+          animation: 'gradShift 6s ease infinite',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 24px',
+          boxShadow: '0 16px 40px -10px rgba(139,92,246,.6)',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 24, letterSpacing: '-0.02em', marginBottom: 6 }}>
+          DropHub<span style={{ fontStyle: 'italic', fontFamily: "'Instrument Serif', serif" }}>°</span>
+        </div>
+        <div style={{ color: 'var(--text-2)', fontSize: 14, marginBottom: 32 }}>
+          Accès protégé · Entrez le mot de passe
+        </div>
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <input
+            className="field"
+            type="password"
+            placeholder="Mot de passe"
+            value={pwd}
+            onChange={(e) => { setPwd(e.target.value); setError(false); }}
+            onKeyDown={(e) => e.key === 'Enter' && attempt()}
+            style={{
+              textAlign: 'center', fontSize: 16, letterSpacing: '0.1em',
+              borderColor: error ? 'rgba(251,113,133,.6)' : undefined,
+              boxShadow: error ? '0 0 0 4px rgba(251,113,133,.15)' : undefined,
+            }}
+            autoFocus
+          />
+        </div>
+        {error && (
+          <div style={{ color: 'var(--rose)', fontSize: 13, marginBottom: 14, animation: 'fadeIn .3s ease' }}>
+            Mot de passe incorrect. Réessayez.
+          </div>
+        )}
+        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '12px 20px' }} onClick={attempt}>
+          Accéder →
+        </button>
+        <div style={{ marginTop: 24, fontSize: 11.5, color: 'var(--text-3)' }}>
+          DropHub Business OS · Usage privé
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function App() {
+  const [authenticated, setAuthenticated] = React.useState(false);
+  const [view, setView] = useState('dashboard');
+  const [products, setProducts] = useState(DEMO_PRODUCTS);
+  const [selected, setSelected] = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2400);
+  }, []);
+
+  const handleAdd = (p) => {
+    setProducts(ps => [p, ...ps]);
+    showToast(`"${p.name}" ajouté à ton catalogue`);
+  };
+
+  const handleDelete = (id) => {
+    setProducts(ps => ps.filter(p => p.id !== id));
+    setSelected(null);
+    showToast('Produit supprimé');
+  };
+
+  const renderView = () => {
+    switch (view) {
+      case 'dashboard': return <Dashboard products={products} onOpenProduct={setSelected} />;
+      case 'products': return <Products products={products} onOpenProduct={setSelected} onNewProduct={() => setAddOpen(true)} />;
+      case 'accounting': return <Accounting products={products} />;
+      case 'analytics': return <Analytics products={products} />;
+      case 'categories': return <Categories products={products} />;
+      case 'settings': return <Settings />;
+      default: return null;
+    }
+  };
+
+  if (!authenticated) return <PasswordGate onUnlock={() => setAuthenticated(true)} />;
+
+  return (
+    <div className="app-root">
+      <DesignSystem />
+
+      {/* Atmosphere */}
+      <div className="atmo">
+        <div className="atmo-grid" />
+        <div className="atmo-third" />
+        <div className="atmo-noise" />
+      </div>
+
+      <Sidebar active={view} onChange={setView} onAdd={() => setAddOpen(true)} />
+
+      <div className="main-wrap" style={{ marginLeft: 248, minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+        <Topbar view={view} />
+        <main style={{ padding: '28px 28px 120px', maxWidth: 1440, margin: '0 auto' }}>
+          <div key={view}>{renderView()}</div>
+        </main>
+      </div>
+
+      <MobileNav active={view} onChange={setView} onAdd={() => setAddOpen(true)} />
+
+      <AddProductModal open={addOpen} onClose={() => setAddOpen(false)} onSave={handleAdd} />
+
+      {selected && (
+        <ProductDrawer product={selected} onClose={() => setSelected(null)} onDelete={handleDelete} />
+      )}
+
+      {toast && (
+        <div className="toast">
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #10B981, #34D399)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Check size={15} strokeWidth={2.5} />
+          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 500 }}>{toast}</div>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 900px) {
+          .main-wrap { padding-bottom: 100px; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+// ── Mount ────────────────────────────────────────────────────────────────────
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>

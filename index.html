@@ -1913,7 +1913,19 @@ const PasswordGate = ({ onUnlock }) => {
 function App() {
   const [authenticated, setAuthenticated] = React.useState(false);
   const [view, setView] = useState('dashboard');
-  const [products, setProducts] = useState(DEMO_PRODUCTS);
+  const [products, setProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('drophub_products');
+      return saved ? JSON.parse(saved) : [];
+    } catch(e) { return []; }
+  });
+
+  // Auto-save products to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem('drophub_products', JSON.stringify(products));
+    } catch(e) {}
+  }, [products]);
   const [selected, setSelected] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [toast, setToast] = useState(null);

@@ -994,11 +994,28 @@ const Accounting = ({ products }) => {
   };
 
   const quarterTotals = useMemo(() => {
+    let totalRev = 0, totalExp = 0, totalProfit = 0;
+    products.forEach(p => {
+      const m = computeProductMetrics(p);
+      totalRev += m.revenue;
+      totalExp += m.totalFees * p.unitsSold;
+      totalProfit += m.totalProfit;
+    });
+    const now = new Date();
+    const q = Math.ceil((now.getMonth() + 1) / 3);
+    const y = now.getFullYear();
     return [
-      { label: 'T2 2026', revenue: 8650, expenses: 3180, profit: 5470, status: 'current' },
-      { label: 'T1 2026', revenue: 17940, expenses: 7040, profit: 10900, status: 'final' },
-      { label: 'T4 2025', revenue: 5050, expenses: 2000, profit: 3050, status: 'declared' },
+      { label: `T${q} ${y}`, revenue: Math.round(totalRev), expenses: Math.round(totalExp), profit: Math.round(totalProfit), status: 'current' },
     ];
+  }, [products]);
+
+  const dynamicMonthly = useMemo(() => {
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+      return { month: months[d.getMonth()], revenue: 0, expenses: 0, profit: 0 };
+    });
   }, []);
 
   return (
@@ -1070,9 +1087,9 @@ const Accounting = ({ products }) => {
           <div style={{ textAlign: 'right' }}>À déclarer</div>
         </div>
         <div className="stagger">
-          {MONTHLY_DATA.slice().reverse().map(m => (
+          {dynamicMonthly.slice().reverse().map(m => (
             <div key={m.month} className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr' }}>
-              <div style={{ fontWeight: 600 }}>{m.month} 2026</div>
+              <div style={{ fontWeight: 600 }}>{m.month} {new Date().getFullYear()}</div>
               <div className="num">{fmtEUR(m.revenue, 0)}</div>
               <div className="num" style={{ color: 'var(--rose)' }}>−{fmtEUR(m.expenses, 0)}</div>
               <div className="num" style={{ fontWeight: 700, color: 'var(--emerald)' }}>{fmtEUR(m.profit, 0)}</div>
@@ -1257,7 +1274,7 @@ const Categories = ({ products }) => {
   );
 };
 
-const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, syncStatus }) => {
+const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, onImportJSON, syncStatus }) => {
   const [showChangePwd, setShowChangePwd] = React.useState(false);
   const [newPwd, setNewPwd] = React.useState('');
   const [confirmPwd, setConfirmPwd] = React.useState('');
@@ -1308,7 +1325,7 @@ const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, syncStatus }) =
       <div className="surface" style={{ padding: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 6 }}>Sauvegardes</h3>
         <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 18px' }}>Exportez une copie locale de tous vos produits.</p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn-primary" onClick={onBackupJSON} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Download size={15} strokeWidth={2.5} />
             Exporter JSON
@@ -1317,6 +1334,11 @@ const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, syncStatus }) =
             <FileDown size={15} strokeWidth={2.5} />
             Exporter CSV
           </button>
+          <label className="btn-ghost" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <LucideReact.Upload size={15} strokeWidth={2.5} />
+            Importer JSON
+            <input type="file" accept=".json" style={{ display: 'none' }} onChange={(e) => onImportJSON && onImportJSON(e.target.files[0])} />
+          </label>
         </div>
       </div>
 
@@ -1397,25 +1419,40 @@ const Settings = ({ onPasswordChange, onBackupJSON, onBackupCSV, syncStatus }) =
 //  MODAL — ADD PRODUCT
 // ────────────────────────────────────────────────────────────────────────────
 
-const AddProductModal = ({ open, onClose, onSave }) => {
+const AddProductModal = ({ open, onClose, onSave, editProduct }) => {
+  const isEdit = !!editProduct;
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    name: '', emoji: '📦', category: 'Gaming', sku: '', supplier: '',
-    supplierLink: '', shopLink: '', status: 'idea',
-    purchasePrice: '', sellPriceHT: '', sellPriceTTC: '',
-    adCost: '', shippingCost: '', platformFee: '', otherFees: '',
-    stock: '', notes: '',
-  });
+  const emptyForm = { name: '', emoji: '📦', category: 'Gaming', sku: '', supplier: '', supplierLink: '', shopLink: '', status: 'idea', purchasePrice: '', sellPriceHT: '', sellPriceTTC: '', adCost: '', shippingCost: '', platformFee: '', otherFees: '', stock: '', notes: '' };
+  const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (open) { setStep(0); setForm({
-      name: '', emoji: '📦', category: 'Gaming', sku: '', supplier: '',
-      supplierLink: '', shopLink: '', status: 'idea',
-      purchasePrice: '', sellPriceHT: '', sellPriceTTC: '',
-      adCost: '', shippingCost: '', platformFee: '', otherFees: '',
-      stock: '', notes: '',
-    }); }
-  }, [open]);
+    if (open) {
+      setStep(0);
+      if (isEdit) {
+        setForm({
+          name: editProduct.name || '',
+          emoji: editProduct.emoji || '📦',
+          category: editProduct.category || 'Gaming',
+          sku: editProduct.sku || '',
+          supplier: editProduct.supplier || '',
+          supplierLink: editProduct.supplierLink || '',
+          shopLink: editProduct.shopLink || '',
+          status: editProduct.status || 'idea',
+          purchasePrice: editProduct.purchasePrice != null ? String(editProduct.purchasePrice) : '',
+          sellPriceHT: editProduct.sellPriceHT != null ? String(editProduct.sellPriceHT) : '',
+          sellPriceTTC: editProduct.sellPriceTTC != null ? String(editProduct.sellPriceTTC) : '',
+          adCost: editProduct.adCost != null ? String(editProduct.adCost) : '',
+          shippingCost: editProduct.shippingCost != null ? String(editProduct.shippingCost) : '',
+          platformFee: editProduct.platformFee != null ? String(editProduct.platformFee) : '',
+          otherFees: editProduct.otherFees != null ? String(editProduct.otherFees) : '',
+          stock: editProduct.stock != null ? String(editProduct.stock) : '',
+          notes: editProduct.notes || '',
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    }
+  }, [open, editProduct]);
 
   if (!open) return null;
 
@@ -1423,7 +1460,8 @@ const AddProductModal = ({ open, onClose, onSave }) => {
 
   const save = () => {
     const product = {
-      id: 'p-' + Date.now(),
+      ...(isEdit ? editProduct : {}),
+      id: isEdit ? editProduct.id : 'p-' + Date.now(),
       name: form.name || 'Nouveau produit',
       emoji: form.emoji || '📦',
       supplier: form.supplier || 'AliExpress',
@@ -1441,9 +1479,9 @@ const AddProductModal = ({ open, onClose, onSave }) => {
       platformFee: parseFloat(form.platformFee) || 0,
       otherFees: parseFloat(form.otherFees) || 0,
       stock: parseInt(form.stock) || 0,
-      unitsSold: 0,
+      unitsSold: isEdit ? (editProduct.unitsSold || 0) : 0,
       notes: form.notes,
-      addedAt: new Date().toISOString().slice(0, 10),
+      addedAt: isEdit ? editProduct.addedAt : new Date().toISOString().slice(0, 10),
       updatedAt: new Date().toISOString().slice(0, 10),
     };
     onSave(product);
@@ -1459,7 +1497,7 @@ const AddProductModal = ({ open, onClose, onSave }) => {
               <Plus size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Nouveau produit</div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{isEdit ? 'Modifier le produit' : 'Nouveau produit'}</div>
               <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Étape {step + 1} sur 3</div>
             </div>
           </div>
@@ -1497,12 +1535,17 @@ const AddProductModal = ({ open, onClose, onSave }) => {
                 </div>
                 <div>
                   <label className="lbl">Catégorie</label>
-                  <select className="field" value={form.category} onChange={(e) => set('category', e.target.value)}>
-                    <option>Gaming</option>
-                    <option>Ergonomie</option>
-                    <option>Décoration RGB</option>
-                    <option>Productivité</option>
-                  </select>
+                  <input className="field" list="cat-list" value={form.category} onChange={(e) => set('category', e.target.value)} placeholder="Gaming, Mode, Tech..." />
+                  <datalist id="cat-list">
+                    <option value="Gaming" />
+                    <option value="Ergonomie" />
+                    <option value="Décoration RGB" />
+                    <option value="Productivité" />
+                    <option value="Mode" />
+                    <option value="Maison" />
+                    <option value="Beauté" />
+                    <option value="Sport" />
+                  </datalist>
                 </div>
               </div>
               <div>
@@ -1592,7 +1635,9 @@ const AddProductModal = ({ open, onClose, onSave }) => {
           {step < 2 ? (
             <button className="btn-primary" onClick={() => setStep(s => s + 1)}>Continuer <ArrowRight size={15} strokeWidth={2.5} /></button>
           ) : (
-            <button className="btn-primary" onClick={save}><Check size={15} strokeWidth={2.5} /> Ajouter le produit</button>
+            <button className="btn-primary" onClick={save}>
+              <Check size={15} strokeWidth={2.5} /> {isEdit ? 'Enregistrer les modifications' : 'Ajouter le produit'}
+            </button>
           )}
         </div>
       </div>
@@ -1604,7 +1649,11 @@ const AddProductModal = ({ open, onClose, onSave }) => {
 //  DRAWER — PRODUCT DETAIL
 // ────────────────────────────────────────────────────────────────────────────
 
-const ProductDrawer = ({ product, onClose, onDelete }) => {
+const ProductDrawer = ({ product, onClose, onDelete, onEdit, onAddSales }) => {
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [salesOpen, setSalesOpen] = React.useState(false);
+  const [salesInput, setSalesInput] = React.useState('1');
+
   if (!product) return null;
   const m = computeProductMetrics(product);
 
@@ -1730,12 +1779,56 @@ const ProductDrawer = ({ product, onClose, onDelete }) => {
             </div>
           )}
 
+          {/* Sales quick add */}
+          <div className="surface" style={{ padding: 18 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShoppingCart size={15} style={{ color: 'var(--violet-hi)' }} />
+              Enregistrer des ventes
+            </div>
+            {!salesOpen ? (
+              <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setSalesOpen(true)}>
+                <Plus size={15} strokeWidth={2.5} /> Ajouter des ventes
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <input
+                  className="field"
+                  type="number"
+                  min="1"
+                  value={salesInput}
+                  onChange={(e) => setSalesInput(e.target.value)}
+                  style={{ flex: 1 }}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { onAddSales(product.id, parseInt(salesInput) || 1); setSalesOpen(false); setSalesInput('1'); }
+                    if (e.key === 'Escape') { setSalesOpen(false); setSalesInput('1'); }
+                  }}
+                />
+                <button className="btn-primary" onClick={() => { onAddSales(product.id, parseInt(salesInput) || 1); setSalesOpen(false); setSalesInput('1'); }}>
+                  <Check size={14} strokeWidth={2.5} />
+                </button>
+                <button className="btn-icon" onClick={() => { setSalesOpen(false); setSalesInput('1'); }}><X size={14} /></button>
+              </div>
+            )}
+          </div>
+
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
-            <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center' }}><Edit3 size={14} /> Modifier</button>
-            <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center', color: 'var(--rose)' }} onClick={() => onDelete(product.id)}>
-              <Trash2 size={14} /> Supprimer
+            <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => { onEdit(product); onClose(); }}>
+              <Edit3 size={14} /> Modifier
             </button>
+            {!confirmDelete ? (
+              <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center', color: 'var(--rose)' }} onClick={() => setConfirmDelete(true)}>
+                <Trash2 size={14} /> Supprimer
+              </button>
+            ) : (
+              <div style={{ flex: 1, display: 'flex', gap: 8 }}>
+                <button className="btn-ghost" style={{ flex: 1, justifyContent: 'center', color: 'var(--rose)', borderColor: 'rgba(251,113,133,.4)', background: 'rgba(251,113,133,.08)' }} onClick={() => onDelete(product.id)}>
+                  <Check size={14} strokeWidth={2.5} /> Confirmer
+                </button>
+                <button className="btn-icon" onClick={() => setConfirmDelete(false)}><X size={14} /></button>
+              </div>
+            )}
           </div>
 
           <div style={{ fontSize: 11.5, color: 'var(--text-3)', textAlign: 'center', paddingTop: 4 }}>
@@ -2035,9 +2128,17 @@ function App() {
   const [products, setProducts] = useState([]);
   const [appPassword, setAppPassword] = useState(DEFAULT_PASSWORD);
   const [syncStatus, setSyncStatus] = useState('loading');
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [editProduct, setEditProduct] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // After 5s, don't block on loading screen even if Firebase is slow
+  useEffect(() => {
+    const t = setTimeout(() => setLoadingTimeout(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -2097,6 +2198,24 @@ function App() {
     showToast('Produit supprimé');
   };
 
+  const handleEdit = (updatedProduct) => {
+    const next = products.map(p => p.id === updatedProduct.id ? { ...updatedProduct, updatedAt: new Date().toISOString().slice(0, 10) } : p);
+    setProducts(next);
+    saveProducts(next);
+    setEditProduct(null);
+    setSelected(updatedProduct);
+    showToast(`"${updatedProduct.name}" mis à jour ✓`);
+  };
+
+  const handleAddSales = (productId, units) => {
+    const next = products.map(p => p.id === productId ? { ...p, unitsSold: (p.unitsSold || 0) + units, updatedAt: new Date().toISOString().slice(0, 10) } : p);
+    setProducts(next);
+    saveProducts(next);
+    const p = next.find(x => x.id === productId);
+    setSelected(p);
+    showToast(`+${units} vente${units > 1 ? 's' : ''} enregistrée${units > 1 ? 's' : ''}`);
+  };
+
   const handlePasswordChange = useCallback((newPwd) => {
     db.collection('data').doc('settings').set({ password: newPwd })
       .then(() => { setAppPassword(newPwd); showToast('Mot de passe mis à jour ✓'); })
@@ -2113,6 +2232,20 @@ function App() {
     URL.revokeObjectURL(url);
     showToast('Sauvegarde JSON téléchargée');
   }, [products, showToast]);
+
+  const handleImportJSON = useCallback((file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) { showToast('Fichier JSON invalide'); return; }
+        saveProducts(data);
+        showToast(`${data.length} produit${data.length > 1 ? 's' : ''} importé${data.length > 1 ? 's' : ''} ✓`);
+      } catch { showToast('Erreur lecture du fichier JSON'); }
+    };
+    reader.readAsText(file);
+  }, [saveProducts, showToast]);
 
   const handleBackupCSV = useCallback(() => {
     let csv = 'Nom;SKU;Catégorie;Statut;Prix achat;Prix vente TTC;Frais;Unités vendues;CA;Bénéfice\n';
@@ -2137,12 +2270,12 @@ function App() {
       case 'accounting': return <Accounting products={products} />;
       case 'analytics': return <Analytics products={products} />;
       case 'categories': return <Categories products={products} />;
-      case 'settings': return <Settings onPasswordChange={handlePasswordChange} onBackupJSON={handleBackupJSON} onBackupCSV={handleBackupCSV} syncStatus={syncStatus} />;
+      case 'settings': return <Settings onPasswordChange={handlePasswordChange} onBackupJSON={handleBackupJSON} onBackupCSV={handleBackupCSV} onImportJSON={handleImportJSON} syncStatus={syncStatus} />;
       default: return null;
     }
   };
 
-  if (syncStatus === 'loading' && products.length === 0 && !authenticated) return <LoadingScreen />;
+  if (syncStatus === 'loading' && products.length === 0 && !authenticated && !loadingTimeout) return <LoadingScreen />;
   if (!authenticated) return <PasswordGate correctPassword={appPassword} onUnlock={() => setAuthenticated(true)} />;
 
   return (
@@ -2167,10 +2300,21 @@ function App() {
 
       <MobileNav active={view} onChange={setView} onAdd={() => setAddOpen(true)} />
 
-      <AddProductModal open={addOpen} onClose={() => setAddOpen(false)} onSave={handleAdd} />
+      <AddProductModal
+        open={addOpen || !!editProduct}
+        onClose={() => { setAddOpen(false); setEditProduct(null); }}
+        onSave={editProduct ? handleEdit : handleAdd}
+        editProduct={editProduct}
+      />
 
       {selected && (
-        <ProductDrawer product={selected} onClose={() => setSelected(null)} onDelete={handleDelete} />
+        <ProductDrawer
+          product={selected}
+          onClose={() => setSelected(null)}
+          onDelete={handleDelete}
+          onEdit={(p) => { setEditProduct(p); }}
+          onAddSales={handleAddSales}
+        />
       )}
 
       {toast && (
